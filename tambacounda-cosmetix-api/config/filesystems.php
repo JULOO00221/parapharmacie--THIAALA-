@@ -60,7 +60,37 @@ return [
             'report' => false,
         ],
 
+        // Supabase Storage is S3-compatible. This disk is declared but not
+        // connected: the SUPABASE_STORAGE_* variables are empty until Phase 2
+        // is validated locally, so nothing here talks to Supabase yet.
+        'supabase' => [
+            'driver' => 's3',
+            'key' => env('SUPABASE_STORAGE_ACCESS_KEY_ID'),
+            'secret' => env('SUPABASE_STORAGE_SECRET_ACCESS_KEY'),
+            'region' => env('SUPABASE_STORAGE_REGION', 'us-east-1'),
+            'bucket' => env('SUPABASE_STORAGE_BUCKET', 'products'),
+            'endpoint' => env('SUPABASE_STORAGE_ENDPOINT'),
+            'use_path_style_endpoint' => true,
+            'throw' => false,
+            'report' => false,
+        ],
+
     ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Product Storage Disk
+    |--------------------------------------------------------------------------
+    |
+    | The disk actually used by StorageService for product-related uploads
+    | (images, etc). Defaults to the local "public" disk for development;
+    | switch FILESYSTEM_PRODUCT_DISK to "supabase" once Supabase Storage is
+    | configured and validated. Never hardcode the disk name in application
+    | code — always resolve it through this setting.
+    |
+    */
+
+    'product_disk' => env('FILESYSTEM_PRODUCT_DISK', 'public'),
 
     /*
     |--------------------------------------------------------------------------
