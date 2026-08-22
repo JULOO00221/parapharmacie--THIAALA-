@@ -28,6 +28,7 @@ class ImportProductsPageTest extends TestCase
         Storage::fake('local');
 
         $this->admin = User::factory()->create();
+        $this->admin->assignRole(\Spatie\Permission\Models\Role::findOrCreate('admin', 'web'));
         $this->store = Store::factory()->create();
         ProductCategory::factory()->create(['name' => 'Soins du visage']);
     }

@@ -11,13 +11,15 @@ use Illuminate\Database\Eloquent\Attributes\Hidden;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Laravel\Sanctum\HasApiTokens;
+use Spatie\Permission\Traits\HasRoles;
 
 #[Fillable(['name', 'email', 'password'])]
 #[Hidden(['password', 'remember_token'])]
 class User extends Authenticatable implements FilamentUser
 {
     /** @use HasFactory<UserFactory> */
-    use HasFactory, Notifiable;
+    use HasApiTokens, HasFactory, HasRoles, Notifiable;
 
     /**
      * Get the attributes that should be cast.
@@ -33,13 +35,12 @@ class User extends Authenticatable implements FilamentUser
     }
 
     /**
-     * No role-based restriction yet (Phase 2 scope): every authenticated
-     * user can access the admin panel. Will be narrowed once roles/permissions
-     * are wired into the back-office (Spatie is installed but not yet applied
-     * to panel access).
+     * Only staff with the "admin" role can access the back-office. Required
+     * before Phase 3's public API registration ships — otherwise any
+     * self-registered storefront customer would also gain admin access.
      */
     public function canAccessPanel(Panel $panel): bool
     {
-        return true;
+        return $this->hasRole('admin');
     }
 }

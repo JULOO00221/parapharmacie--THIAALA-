@@ -26,6 +26,7 @@ class FilamentProductResourceTest extends TestCase
         parent::setUp();
 
         $this->admin = User::factory()->create();
+        $this->admin->assignRole(\Spatie\Permission\Models\Role::findOrCreate('admin', 'web'));
     }
 
     /**

@@ -156,6 +156,38 @@ class ProductService
         );
     }
 
+    /**
+     * Public availability for the storefront: never exposes raw quantities,
+     * only a boolean and a coarse status derived from sellable stock
+     * (quantity_available - quantity_reserved) summed across every store
+     * the product has a stock row in — there's no per-store storefront yet,
+     * so this aggregates rather than assuming a single "default" store.
+     *
+     * @return array{available: bool, stock_status: string}
+     */
+    public function availability(Product $product): array
+    {
+        $stocks = $product->relationLoaded('stocks') ? $product->stocks : $product->stocks()->get();
+
+        $sellable = $stocks->sum(
+            fn (Stock $stock) => max(0, $stock->quantity_available - $stock->quantity_reserved)
+        );
+
+        $thresholds = $stocks->pluck('alert_threshold')->filter(fn (?int $threshold) => $threshold !== null);
+        $threshold = $thresholds->isNotEmpty() ? $thresholds->min() : null;
+
+        $status = match (true) {
+            $sellable <= 0 => 'out_of_stock',
+            $threshold !== null && $sellable <= $threshold => 'low_stock',
+            default => 'in_stock',
+        };
+
+        return [
+            'available' => $product->is_active && $sellable > 0,
+            'stock_status' => $status,
+        ];
+    }
+
     private function assertPriceConsistency(mixed $price, mixed $compareAtPrice): void
     {
         if ($price === null || $compareAtPrice === null) {
