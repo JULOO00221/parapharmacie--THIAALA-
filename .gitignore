@@ -1,0 +1,49 @@
+# === macOS ===
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+.Spotlight-V100
+.Trashes
+
+# === Laravel (tambacounda-cosmetix-api/) ===
+tambacounda-cosmetix-api/vendor/
+tambacounda-cosmetix-api/node_modules/
+tambacounda-cosmetix-api/.env
+tambacounda-cosmetix-api/.env.backup
+tambacounda-cosmetix-api/.env.*.php
+tambacounda-cosmetix-api/.phpunit.result.cache
+tambacounda-cosmetix-api/Homestead.json
+tambacounda-cosmetix-api/Homestead.yaml
+tambacounda-cosmetix-api/npm-debug.log
+tambacounda-cosmetix-api/yarn-error.log
+tambacounda-cosmetix-api/storage/*.key
+tambacounda-cosmetix-api/storage/pail
+tambacounda-cosmetix-api/storage/logs/*.log
+tambacounda-cosmetix-api/storage/framework/cache/*
+!tambacounda-cosmetix-api/storage/framework/cache/.gitignore
+tambacounda-cosmetix-api/storage/framework/sessions/*
+!tambacounda-cosmetix-api/storage/framework/sessions/.gitignore
+tambacounda-cosmetix-api/storage/framework/views/*
+!tambacounda-cosmetix-api/storage/framework/views/.gitignore
+tambacounda-cosmetix-api/storage/framework/testing/*
+!tambacounda-cosmetix-api/storage/framework/testing/.gitignore
+tambacounda-cosmetix-api/bootstrap/cache/*.php
+tambacounda-cosmetix-api/public/hot
+tambacounda-cosmetix-api/public/storage
+tambacounda-cosmetix-api/public/build
+
+# === Next.js (frontend/ — futur) ===
+frontend/node_modules/
+frontend/.next/
+frontend/out/
+frontend/.env*.local
+frontend/npm-debug.log*
+frontend/yarn-debug.log*
+frontend/yarn-error.log*
+
+# === IDE ===
+.vscode/
+.idea/
+*.swp
+*.swo
