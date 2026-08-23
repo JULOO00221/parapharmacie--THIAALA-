@@ -121,9 +121,44 @@ class ProductService
         });
     }
 
+    /**
+     * Deletes the physical file first, then the database row. Storage's
+     * delete() returns false rather than throwing when the file is already
+     * absent, so a missing file never blocks removing the record.
+     */
     public function removeImage(ProductImage $image): void
     {
+        app(StorageService::class)->delete($image->path);
+
         $image->delete();
+    }
+
+    /**
+     * Updates an image's attributes. When $data includes a new `path` (a
+     * genuine replacement upload, already stored by the caller), the old
+     * file is deleted ONLY after the database update succeeds — if the
+     * update throws, the old file is left untouched and still referenced.
+     */
+    public function updateImage(ProductImage $image, array $data): ProductImage
+    {
+        return DB::transaction(function () use ($image, $data) {
+            $previousPath = $image->path;
+
+            if ($data['is_primary'] ?? false) {
+                $this->setPrimaryImage($image);
+                unset($data['is_primary']);
+            }
+
+            $image->update($data);
+
+            $newPath = $data['path'] ?? null;
+
+            if ($newPath !== null && $newPath !== $previousPath) {
+                app(StorageService::class)->delete($previousPath);
+            }
+
+            return $image->refresh();
+        });
     }
 
     /**

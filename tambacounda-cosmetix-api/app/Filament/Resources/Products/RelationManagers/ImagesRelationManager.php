@@ -33,6 +33,12 @@ class ImagesRelationManager extends RelationManager
                 FileUpload::make('path')
                     ->label('Image')
                     ->image()
+                    // Explicit allow-list rather than the broader image()
+                    // default, which would also accept image/svg+xml — SVGs
+                    // can embed scripts and are a real XSS vector for
+                    // publicly-served product photos.
+                    ->acceptedFileTypes(['image/jpeg', 'image/png', 'image/webp'])
+                    ->maxSize(4096)
                     ->disk(app(StorageService::class)->disk())
                     ->directory('products')
                     ->required(),
@@ -84,17 +90,13 @@ class ImagesRelationManager extends RelationManager
                     ->requiresConfirmation()
                     ->action(fn ($record) => app(ProductService::class)->setPrimaryImage($record)),
                 EditAction::make()
-                    ->using(function (Model $record, array $data): Model {
-                        if ($data['is_primary'] ?? false) {
-                            app(ProductService::class)->setPrimaryImage($record);
-                            unset($data['is_primary']);
-                        }
+                    ->using(fn (Model $record, array $data): Model => app(ProductService::class)->updateImage($record, $data)),
+                DeleteAction::make()
+                    ->using(function (Model $record): bool {
+                        app(ProductService::class)->removeImage($record);
 
-                        $record->update($data);
-
-                        return $record;
+                        return true;
                     }),
-                DeleteAction::make(),
             ]);
     }
 }
