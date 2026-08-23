@@ -53,7 +53,12 @@ function buildUrl(path: string, params?: QueryParams): string {
         continue;
       }
 
-      url.searchParams.set(key, String(value));
+      // Laravel's `boolean` validation rule only accepts 1/0/"1"/"0" (and
+      // true/false themselves) — NOT the strings "true"/"false" that
+      // String(value) would produce, so booleans need explicit mapping.
+      const serialized = typeof value === 'boolean' ? (value ? '1' : '0') : String(value);
+
+      url.searchParams.set(key, serialized);
     }
   }
 

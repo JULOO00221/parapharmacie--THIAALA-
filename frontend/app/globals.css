@@ -1,26 +1,69 @@
 @import "tailwindcss";
 
+/*
+ * Tambacounda Cosmetix storefront identity.
+ * No visual identity existed anywhere in the repo before this file — the
+ * Filament back-office's amber is an admin-tool choice, not a customer-facing
+ * brand, so this is a deliberate, separate palette:
+ *   - brand (deep forest green): trust, health, pharmacy — the primary color.
+ *   - accent (warm terracotta/clay): Sahel warmth, used sparingly for CTAs
+ *     and highlights so it stays premium rather than loud.
+ *   - warm off-white surfaces instead of clinical pure white.
+ */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --color-brand-50: #eef5f1;
+  --color-brand-100: #d6e8df;
+  --color-brand-200: #adcfbf;
+  --color-brand-400: #4d8a6c;
+  --color-brand-600: #1f4d3a;
+  --color-brand-700: #173a2b;
+  --color-brand-900: #0d211a;
+
+  --color-accent-100: #f7e2d3;
+  --color-accent-400: #dd8f5c;
+  --color-accent-600: #c6633c;
+  --color-accent-700: #a34f2e;
+
+  --color-surface: #fbf9f6;
+  --color-surface-raised: #ffffff;
+  --color-ink: #1c1b19;
+  --color-ink-muted: #6b6560;
+  --color-border: #e7e2db;
+
+  --color-success: #1f7a4a;
+  --color-warning: #b3690a;
+  --color-danger: #b5342a;
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
+  --color-brand-50: var(--color-brand-50);
+  --color-brand-100: var(--color-brand-100);
+  --color-brand-200: var(--color-brand-200);
+  --color-brand-400: var(--color-brand-400);
+  --color-brand-600: var(--color-brand-600);
+  --color-brand-700: var(--color-brand-700);
+  --color-brand-900: var(--color-brand-900);
+
+  --color-accent-100: var(--color-accent-100);
+  --color-accent-400: var(--color-accent-400);
+  --color-accent-600: var(--color-accent-600);
+  --color-accent-700: var(--color-accent-700);
+
+  --color-surface: var(--color-surface);
+  --color-surface-raised: var(--color-surface-raised);
+  --color-ink: var(--color-ink);
+  --color-ink-muted: var(--color-ink-muted);
+  --color-border: var(--color-border);
+
+  --color-success: var(--color-success);
+  --color-warning: var(--color-warning);
+  --color-danger: var(--color-danger);
+
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
-
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--color-surface);
+  color: var(--color-ink);
 }
