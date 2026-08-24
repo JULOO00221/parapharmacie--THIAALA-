@@ -7,7 +7,18 @@ import { formatPrice } from '@/lib/utils/format';
  * from products.price and real stock at POST /orders time; the success
  * page displays only what that response actually returns.
  */
-export function OrderSummary({ items, subtotal }: { items: CartItem[]; subtotal: number }) {
+export function OrderSummary({
+  items,
+  subtotal,
+  deliveryFee = 0,
+}: {
+  items: CartItem[];
+  subtotal: number;
+  /** Selected zone's fee (display-only estimate) — 0 for pickup. */
+  deliveryFee?: number;
+}) {
+  const total = subtotal + deliveryFee;
+
   return (
     <div className="rounded-2xl border border-border bg-surface-raised p-4 sm:p-6">
       <h2 className="text-lg font-semibold text-ink">Récapitulatif</h2>
@@ -35,11 +46,11 @@ export function OrderSummary({ items, subtotal }: { items: CartItem[]; subtotal:
         </div>
         <div className="flex items-center justify-between text-ink-muted">
           <span>Livraison</span>
-          <span>0 FCFA</span>
+          <span>{formatPrice(deliveryFee)}</span>
         </div>
         <div className="flex items-center justify-between text-base font-semibold text-ink">
           <span>Total</span>
-          <span>{formatPrice(subtotal)}</span>
+          <span>{formatPrice(total)}</span>
         </div>
       </div>
 

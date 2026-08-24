@@ -8,22 +8,32 @@ import { Button } from '@/components/ui/Button';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { ApiError } from '@/lib/api/client';
 import { createOrder } from '@/lib/api/orders';
-import type { CreateOrderPayload, Store } from '@/lib/api/types';
+import type { CreateOrderPayload, DeliveryZone, Store } from '@/lib/api/types';
+import { formatPrice } from '@/lib/utils/format';
 import { OrderSummary } from './OrderSummary';
 
 /** sessionStorage key prefix the success page reads from — see OrderSuccessView. */
 const LAST_ORDER_KEY_PREFIX = 'tambacounda-cosmetix:order:';
 
+type FulfillmentMode = 'pickup' | 'delivery';
+
 function fieldError(errors: Record<string, string[]>, field: string): string | undefined {
   return errors[field]?.[0];
 }
 
-export function CheckoutView({ stores }: { stores: Store[] }) {
+export function CheckoutView({ stores, deliveryZones }: { stores: Store[]; deliveryZones: DeliveryZone[] }) {
   const { items, subtotal, clearCart } = useCart();
   const router = useRouter();
 
   const [selectedStoreId, setSelectedStoreId] = useState<number | null>(stores[0]?.id ?? null);
   const store = stores.find((candidate) => candidate.id === selectedStoreId) ?? null;
+
+  // La livraison n'est proposée que si au moins une zone active a pu être
+  // chargée — sinon le checkout reste utilisable en retrait uniquement.
+  const [fulfillmentMode, setFulfillmentMode] = useState<FulfillmentMode>('pickup');
+  const [selectedZoneId, setSelectedZoneId] = useState<number | null>(null);
+  const [deliveryAddress, setDeliveryAddress] = useState('');
+  const selectedZone = deliveryZones.find((zone) => zone.id === selectedZoneId) ?? null;
 
   const [customerName, setCustomerName] = useState('');
   const [customerPhone, setCustomerPhone] = useState('');
@@ -35,6 +45,7 @@ export function CheckoutView({ stores }: { stores: Store[] }) {
 
   const nameInputRef = useRef<HTMLInputElement>(null);
   const phoneInputRef = useRef<HTMLInputElement>(null);
+  const addressInputRef = useRef<HTMLTextAreaElement>(null);
 
   // Générée une seule fois (initialiseur paresseux de useState), jamais
   // recréée à chaque re-render, et réutilisée pour toute nouvelle
@@ -74,14 +85,28 @@ export function CheckoutView({ stores }: { stores: Store[] }) {
     setFieldErrors({});
     setGeneralError(null);
 
+    const isPickup = fulfillmentMode === 'pickup';
+
     const payload: CreateOrderPayload = {
       items: items.map((item) => ({ product_id: item.productId, quantity: item.quantity })),
       store_id: store.id,
       customer_name: customerName.trim(),
       customer_phone: customerPhone.trim(),
       customer_email: customerEmail.trim() || undefined,
-      is_pickup: true,
-      payment_method: 'cash_in_store',
+      is_pickup: isPickup,
+      // Jamais de delivery_fee ici : Laravel le recalcule exclusivement
+      // depuis la zone sélectionnée (delivery_zone_id), jamais depuis le
+      // frontend — see CreateOrderPayload's own doc comment.
+      ...(isPickup
+        ? {}
+        : {
+            delivery_zone_id: selectedZoneId ?? undefined,
+            delivery_address: deliveryAddress.trim() || undefined,
+          }),
+      // Le retrait se paie en boutique, la livraison se paie à la
+      // réception — deux moyens réellement distincts de la whitelist
+      // serveur (OrderService::PAYMENT_METHODS).
+      payment_method: isPickup ? 'cash_in_store' : 'cash_on_delivery',
     };
 
     try {
@@ -109,6 +134,8 @@ export function CheckoutView({ stores }: { stores: Store[] }) {
             nameInputRef.current?.focus();
           } else if (errors.customer_phone) {
             phoneInputRef.current?.focus();
+          } else if (errors.delivery_address) {
+            addressInputRef.current?.focus();
           }
         } else if (error.status === 409) {
           setGeneralError(
@@ -134,6 +161,11 @@ export function CheckoutView({ stores }: { stores: Store[] }) {
   const nameError = fieldError(fieldErrors, 'customer_name');
   const phoneError = fieldError(fieldErrors, 'customer_phone');
   const emailError = fieldError(fieldErrors, 'customer_email');
+  const zoneError = fieldError(fieldErrors, 'delivery_zone_id');
+  const addressError = fieldError(fieldErrors, 'delivery_address');
+
+  const deliveryFeeEstimate =
+    fulfillmentMode === 'delivery' && selectedZone ? Number.parseFloat(selectedZone.fee) : 0;
 
   return (
     <div className="mx-auto max-w-5xl px-4 py-10 sm:px-6">
@@ -228,17 +260,15 @@ export function CheckoutView({ stores }: { stores: Store[] }) {
             </div>
           </section>
 
-          <section aria-labelledby="checkout-fulfillment-heading" className="rounded-2xl border border-border bg-surface-raised p-4 sm:p-6">
-            <h2 id="checkout-fulfillment-heading" className="text-lg font-semibold text-ink">
-              Mode de réception
+          <section aria-labelledby="checkout-store-heading" className="rounded-2xl border border-border bg-surface-raised p-4 sm:p-6">
+            <h2 id="checkout-store-heading" className="text-lg font-semibold text-ink">
+              Boutique
             </h2>
 
-            {/* La livraison n'est pas encore proposée : aucune zone de
-                livraison réelle n'existe actuellement. Structuré en liste
-                de boutiques (même avec une seule aujourd'hui) pour rester
-                compatible avec plusieurs boutiques plus tard. */}
+            {/* Structuré en liste (même avec une seule boutique aujourd'hui)
+                pour rester compatible avec plusieurs boutiques plus tard. */}
             <fieldset className="mt-4">
-              <legend className="sr-only">Choisir la boutique de retrait</legend>
+              <legend className="sr-only">Choisir la boutique</legend>
               {stores.map((candidate) => (
                 <label
                   key={candidate.id}
@@ -252,13 +282,115 @@ export function CheckoutView({ stores }: { stores: Store[] }) {
                     onChange={() => setSelectedStoreId(candidate.id)}
                     className="mt-1 h-4 w-4 accent-brand-600"
                   />
-                  <span>
-                    <span className="block text-sm font-semibold text-ink">Retrait en boutique</span>
-                    <span className="mt-0.5 block text-sm text-ink-muted">{candidate.name}</span>
-                  </span>
+                  <span className="block text-sm font-medium text-ink">{candidate.name}</span>
                 </label>
               ))}
             </fieldset>
+          </section>
+
+          <section aria-labelledby="checkout-fulfillment-heading" className="rounded-2xl border border-border bg-surface-raised p-4 sm:p-6">
+            <h2 id="checkout-fulfillment-heading" className="text-lg font-semibold text-ink">
+              Mode de réception
+            </h2>
+
+            <fieldset className="mt-4 space-y-3">
+              <legend className="sr-only">Choisir le mode de réception</legend>
+
+              <label className="flex cursor-pointer items-start gap-3 rounded-xl border border-border p-4 has-[:checked]:border-brand-600 has-[:checked]:bg-brand-50">
+                <input
+                  type="radio"
+                  name="fulfillment_mode"
+                  checked={fulfillmentMode === 'pickup'}
+                  onChange={() => setFulfillmentMode('pickup')}
+                  className="mt-1 h-4 w-4 accent-brand-600"
+                />
+                <span>
+                  <span className="block text-sm font-semibold text-ink">Retrait en boutique</span>
+                  <span className="mt-0.5 block text-sm text-ink-muted">Aucun frais de livraison.</span>
+                </span>
+              </label>
+
+              {/* La livraison n'est proposée que si des zones actives ont
+                  réellement été chargées depuis l'API — jamais de liste
+                  codée en dur, et le retrait reste toujours disponible si
+                  aucune zone n'est là. */}
+              {deliveryZones.length > 0 && (
+                <label className="flex cursor-pointer items-start gap-3 rounded-xl border border-border p-4 has-[:checked]:border-brand-600 has-[:checked]:bg-brand-50">
+                  <input
+                    type="radio"
+                    name="fulfillment_mode"
+                    checked={fulfillmentMode === 'delivery'}
+                    onChange={() => setFulfillmentMode('delivery')}
+                    className="mt-1 h-4 w-4 accent-brand-600"
+                  />
+                  <span>
+                    <span className="block text-sm font-semibold text-ink">Livraison</span>
+                    <span className="mt-0.5 block text-sm text-ink-muted">Choisissez votre zone ci-dessous.</span>
+                  </span>
+                </label>
+              )}
+            </fieldset>
+
+            {fulfillmentMode === 'delivery' && (
+              <div className="mt-4 space-y-4 border-t border-border pt-4">
+                <fieldset>
+                  <legend className="mb-2 block text-sm font-medium text-ink">
+                    Zone de livraison <span aria-hidden="true">*</span>
+                  </legend>
+                  <div className="space-y-2">
+                    {deliveryZones.map((zone) => (
+                      <label
+                        key={zone.id}
+                        className="flex cursor-pointer items-center justify-between gap-3 rounded-xl border border-border p-3 has-[:checked]:border-brand-600 has-[:checked]:bg-brand-50"
+                      >
+                        <span className="flex items-center gap-3">
+                          <input
+                            type="radio"
+                            name="delivery_zone_id"
+                            required
+                            checked={selectedZoneId === zone.id}
+                            onChange={() => setSelectedZoneId(zone.id)}
+                            aria-describedby={zoneError ? 'delivery_zone_id-error' : undefined}
+                            className="h-4 w-4 accent-brand-600"
+                          />
+                          <span className="text-sm font-medium text-ink">{zone.name}</span>
+                        </span>
+                        <span className="text-sm font-medium text-ink">{formatPrice(zone.fee)}</span>
+                      </label>
+                    ))}
+                  </div>
+                  {zoneError && (
+                    <p id="delivery_zone_id-error" className="mt-1 text-xs text-[color:var(--color-danger)]">
+                      {zoneError}
+                    </p>
+                  )}
+                </fieldset>
+
+                <div>
+                  <label htmlFor="delivery_address" className="mb-1.5 block text-sm font-medium text-ink">
+                    Adresse de livraison <span aria-hidden="true">*</span>
+                  </label>
+                  <textarea
+                    ref={addressInputRef}
+                    id="delivery_address"
+                    name="delivery_address"
+                    required
+                    rows={3}
+                    value={deliveryAddress}
+                    onChange={(event) => setDeliveryAddress(event.target.value)}
+                    aria-invalid={addressError ? true : undefined}
+                    aria-describedby={addressError ? 'delivery_address-error' : undefined}
+                    className="w-full rounded-lg border border-border bg-surface-raised px-3 py-2.5 text-sm"
+                    placeholder="Quartier, repère, numéro de porte…"
+                  />
+                  {addressError && (
+                    <p id="delivery_address-error" className="mt-1 text-xs text-[color:var(--color-danger)]">
+                      {addressError}
+                    </p>
+                  )}
+                </div>
+              </div>
+            )}
           </section>
 
           <section aria-labelledby="checkout-payment-heading" className="rounded-2xl border border-border bg-surface-raised p-4 sm:p-6">
@@ -266,13 +398,16 @@ export function CheckoutView({ stores }: { stores: Store[] }) {
               Paiement
             </h2>
             <p className="mt-2 text-sm text-ink-muted">
-              Paiement à la boutique, au moment du retrait. Aucun paiement en ligne n&apos;est requis pour valider cette commande.
+              {fulfillmentMode === 'pickup'
+                ? 'Paiement à la boutique, au moment du retrait.'
+                : 'Paiement à la livraison, au moment de la réception.'}{' '}
+              Aucun paiement en ligne n&apos;est requis pour valider cette commande.
             </p>
           </section>
         </div>
 
         <div className="w-full lg:w-96 lg:shrink-0">
-          <OrderSummary items={items} subtotal={subtotal} />
+          <OrderSummary items={items} subtotal={subtotal} deliveryFee={deliveryFeeEstimate} />
 
           <Button type="submit" size="lg" disabled={submitting} className="mt-4 w-full">
             {submitting ? 'Envoi en cours…' : 'Confirmer ma commande'}
