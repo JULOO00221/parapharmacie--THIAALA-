@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { ApiError } from './client';
-import { createOrder, getOrder } from './orders';
-import type { CreateOrderPayload, Order } from './types';
+import { createOrder, createOrderViaAccount, getMyOrders, getOrder } from './orders';
+import type { CreateOrderPayload, Order, PaginatedResponse } from './types';
 
 const VALID_PAYLOAD: CreateOrderPayload = {
   items: [{ product_id: 1, quantity: 2 }],
@@ -171,6 +171,90 @@ describe('lib/api/orders', () => {
 
       const [url] = fetchSpy.mock.calls[0];
       expect(String(url)).not.toContain('221771234567');
+    });
+
+    it('sends the token as a Bearer header for an authenticated lookup, and never in the URL', async () => {
+      const fetchSpy = vi.spyOn(global, 'fetch').mockResolvedValue(jsonResponse({ data: SAMPLE_ORDER }));
+
+      await getOrder(SAMPLE_ORDER.order_number, { token: 'secret-token' });
+
+      const [url, init] = fetchSpy.mock.calls[0];
+      const headers = init?.headers as Record<string, string>;
+      expect(headers.Authorization).toBe('Bearer secret-token');
+      expect(String(url)).not.toContain('secret-token');
+    });
+  });
+
+  describe('getMyOrders', () => {
+    const PAGE: PaginatedResponse<Order> = {
+      data: [SAMPLE_ORDER],
+      links: { first: null, last: null, prev: null, next: null },
+      meta: { current_page: 1, from: 1, last_page: 1, links: [], path: '', per_page: 15, to: 1, total: 1 },
+    };
+
+    it('sends the token as a Bearer header, never in the URL, and forwards pagination params', async () => {
+      const fetchSpy = vi.spyOn(global, 'fetch').mockResolvedValue(jsonResponse(PAGE));
+
+      await getMyOrders('secret-token', { page: 2, per_page: 5 });
+
+      const [url, init] = fetchSpy.mock.calls[0];
+      const headers = init?.headers as Record<string, string>;
+      expect(headers.Authorization).toBe('Bearer secret-token');
+      expect(String(url)).not.toContain('secret-token');
+      expect(String(url)).toContain('page=2');
+      expect(String(url)).toContain('per_page=5');
+    });
+
+    it('resolves with the paginated response as-is', async () => {
+      vi.spyOn(global, 'fetch').mockResolvedValue(jsonResponse(PAGE));
+
+      const result = await getMyOrders('secret-token');
+
+      expect(result.meta.total).toBe(1);
+      expect(result.data[0].order_number).toBe(SAMPLE_ORDER.order_number);
+    });
+  });
+
+  describe('createOrderViaAccount', () => {
+    it('posts to the internal /api/account/orders proxy — never directly to the Laravel API — and forwards the Idempotency-Key', async () => {
+      const fetchSpy = vi.spyOn(global, 'fetch').mockResolvedValue(jsonResponse({ data: SAMPLE_ORDER }, 201));
+
+      await createOrderViaAccount(VALID_PAYLOAD, 'idem-key-account-1');
+
+      const [url, init] = fetchSpy.mock.calls[0];
+      expect(String(url)).toContain('/api/account/orders');
+      expect(String(url)).not.toContain('/api/v1');
+      const headers = init?.headers as Record<string, string>;
+      expect(headers['Idempotency-Key']).toBe('idem-key-account-1');
+    });
+
+    it('never sends a price/total/stock field, same guarantee as the guest path', async () => {
+      const fetchSpy = vi.spyOn(global, 'fetch').mockResolvedValue(jsonResponse({ data: SAMPLE_ORDER }, 201));
+
+      const payloadWithForbiddenFields = { ...VALID_PAYLOAD, total: 1, cost_price: 1 } as CreateOrderPayload;
+      await createOrderViaAccount(payloadWithForbiddenFields, 'key');
+
+      const [, init] = fetchSpy.mock.calls[0];
+      const sentBody = JSON.parse(init?.body as string);
+      expect(sentBody).not.toHaveProperty('total');
+      expect(sentBody).not.toHaveProperty('cost_price');
+    });
+
+    it('resolves with the created order on success', async () => {
+      vi.spyOn(global, 'fetch').mockResolvedValue(jsonResponse({ data: SAMPLE_ORDER }, 201));
+
+      const order = await createOrderViaAccount(VALID_PAYLOAD, 'key');
+
+      expect(order.order_number).toBe(SAMPLE_ORDER.order_number);
+    });
+
+    it('throws a typed ApiError when the proxy relays a Laravel error (e.g. 409 insufficient stock)', async () => {
+      vi.spyOn(global, 'fetch').mockResolvedValue(jsonResponse({ message: 'Stock insuffisant.' }, 409));
+
+      const error = await createOrderViaAccount(VALID_PAYLOAD, 'key').catch((e) => e);
+
+      expect(error).toBeInstanceOf(ApiError);
+      expect((error as ApiError).status).toBe(409);
     });
   });
 });

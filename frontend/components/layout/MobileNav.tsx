@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { useState } from 'react';
+import type { ReactNode } from 'react';
 import { SearchBar } from './SearchBar';
 
 const LINKS = [
@@ -9,7 +10,7 @@ const LINKS = [
   { href: '/produits', label: 'Produits' },
 ];
 
-export function MobileNav() {
+export function MobileNav({ accountSection }: { accountSection?: ReactNode }) {
   const [open, setOpen] = useState(false);
 
   return (
@@ -51,6 +52,8 @@ export function MobileNav() {
               ))}
             </ul>
           </nav>
+
+          {accountSection && <div className="mt-4 border-t border-border pt-4">{accountSection}</div>}
         </div>
       )}
     </div>

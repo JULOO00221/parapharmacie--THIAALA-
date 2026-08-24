@@ -7,7 +7,7 @@ import { useCart } from '@/components/cart/CartProvider';
 import { Button } from '@/components/ui/Button';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { ApiError } from '@/lib/api/client';
-import { createOrder } from '@/lib/api/orders';
+import { createOrder, createOrderViaAccount } from '@/lib/api/orders';
 import type { CreateOrderPayload, DeliveryZone, Store } from '@/lib/api/types';
 import { formatPrice } from '@/lib/utils/format';
 import { OrderSummary } from './OrderSummary';
@@ -21,7 +21,16 @@ function fieldError(errors: Record<string, string[]>, field: string): string | u
   return errors[field]?.[0];
 }
 
-export function CheckoutView({ stores, deliveryZones }: { stores: Store[]; deliveryZones: DeliveryZone[] }) {
+export function CheckoutView({
+  stores,
+  deliveryZones,
+  isAuthenticated = false,
+}: {
+  stores: Store[];
+  deliveryZones: DeliveryZone[];
+  /** Chosen server-side from the session cookie — never the token itself, which CheckoutView never sees. */
+  isAuthenticated?: boolean;
+}) {
   const { items, subtotal, clearCart } = useCart();
   const router = useRouter();
 
@@ -110,7 +119,14 @@ export function CheckoutView({ stores, deliveryZones }: { stores: Store[]; deliv
     };
 
     try {
-      const order = await createOrder(payload, idempotencyKey);
+      // Invité : appel direct à Laravel, inchangé. Connecté : passe par le
+      // proxy interne /api/account/orders pour que le serveur Next.js
+      // attache le Bearer depuis le cookie HttpOnly — CheckoutView n'a
+      // jamais accès au token lui-même. user_id n'est jamais envoyé dans
+      // les deux cas ; Laravel le déduit du token côté serveur.
+      const order = isAuthenticated
+        ? await createOrderViaAccount(payload, idempotencyKey)
+        : await createOrder(payload, idempotencyKey);
 
       // Stocké côté client uniquement pour que la page de succès affiche
       // instantanément les montants réellement renvoyés par Laravel, sans

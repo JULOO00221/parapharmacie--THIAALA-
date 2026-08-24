@@ -78,9 +78,12 @@ function buildUrl(path: string, params?: QueryParams): string {
  * Shared fetch/timeout/error-normalization plumbing for apiGet and apiPost
  * — never throws a raw fetch/DOMException, always a typed ApiError, so
  * callers get a consistent shape whether the failure was a 4xx/5xx from
- * Laravel or a network/timeout issue.
+ * Laravel or a network/timeout issue. Exported so callers that target a
+ * same-origin Next.js Route Handler (e.g. the authenticated checkout
+ * proxy) rather than the Laravel API directly can reuse the exact same
+ * normalization instead of duplicating it.
  */
-async function request<T>(
+export async function request<T>(
   url: string,
   init: RequestInit,
   options: { signal?: AbortSignal; timeoutMs?: number }

@@ -138,6 +138,31 @@ export interface DeliveryZone {
   fee: string;
 }
 
+/** GET /auth/me, and the `user` field of /auth/register + /auth/login — matches App\Http\Resources\V1\UserResource. */
+export interface User {
+  id: number;
+  name: string;
+  email: string;
+}
+
+/** POST /auth/register and POST /auth/login response body. The token is only ever read server-side (see lib/auth/*) — never forwarded to a Client Component. */
+export interface AuthResponse {
+  user: User;
+  token: string;
+}
+
+export interface LoginPayload {
+  email: string;
+  password: string;
+}
+
+export interface RegisterPayload {
+  name: string;
+  email: string;
+  password: string;
+  password_confirmation: string;
+}
+
 export type OrderStatus = 'pending' | 'confirmed' | 'preparing' | 'ready' | 'delivered' | 'cancelled';
 export type PaymentStatus = 'pending' | 'paid';
 /** Whitelist enforced server-side by OrderService::PAYMENT_METHODS. */

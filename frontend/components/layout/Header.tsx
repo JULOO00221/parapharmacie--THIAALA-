@@ -1,11 +1,16 @@
 import Link from 'next/link';
 import { Suspense } from 'react';
 import { CartButton } from '@/components/cart/CartButton';
+import { AccountNav } from './AccountNav';
 import { MobileNav } from './MobileNav';
 import { SearchBar } from './SearchBar';
 
 function SearchBarFallback({ className }: { className?: string }) {
   return <div className={className} aria-hidden="true" />;
+}
+
+function AccountNavFallback() {
+  return <div className="h-5 w-16" aria-hidden="true" />;
 }
 
 export function Header() {
@@ -29,10 +34,22 @@ export function Header() {
           <SearchBar className="ml-auto hidden max-w-sm flex-1 md:block" />
         </Suspense>
 
+        <div className="hidden md:block">
+          <Suspense fallback={<AccountNavFallback />}>
+            <AccountNav variant="desktop" />
+          </Suspense>
+        </div>
+
         <div className="ml-auto flex items-center gap-2 md:ml-0">
           <CartButton />
           <Suspense fallback={null}>
-            <MobileNav />
+            <MobileNav
+              accountSection={
+                <Suspense fallback={null}>
+                  <AccountNav variant="mobile" />
+                </Suspense>
+              }
+            />
           </Suspense>
         </div>
       </div>
