@@ -1,5 +1,6 @@
 import Image from 'next/image';
 import Link from 'next/link';
+import { AddToCartButton } from '@/components/cart/AddToCartButton';
 import type { Product } from '@/lib/api/types';
 import { PriceTag } from './PriceTag';
 import { ProductImagePlaceholder } from './ProductImagePlaceholder';
@@ -37,6 +38,8 @@ export function ProductCard({ product }: { product: Product }) {
           <PriceTag price={product.price} compareAtPrice={product.compare_at_price} />
           <StockBadge status={product.stock_status} />
         </div>
+
+        <AddToCartButton product={product} className="w-full" />
       </div>
     </Link>
   );

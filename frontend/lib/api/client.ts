@@ -29,6 +29,15 @@ interface GetOptions {
   /** Passed straight through to fetch() for Next.js's server-side cache control. */
   cache?: RequestCache;
   next?: { revalidate?: number | false; tags?: string[] };
+  /** Extra headers (e.g. X-Order-Phone for a guest order lookup). */
+  headers?: Record<string, string>;
+}
+
+interface PostOptions {
+  signal?: AbortSignal;
+  timeoutMs?: number;
+  /** Extra headers — e.g. Idempotency-Key, required on POST /orders. */
+  headers?: Record<string, string>;
 }
 
 function requireApiUrl(): string {
@@ -66,26 +75,24 @@ function buildUrl(path: string, params?: QueryParams): string {
 }
 
 /**
- * GET a Laravel API v1 endpoint and parse its JSON response. Never throws
- * a raw fetch/DOMException — always a typed ApiError, so callers get a
- * consistent shape whether the failure was a 4xx/5xx from Laravel or a
- * network/timeout issue.
+ * Shared fetch/timeout/error-normalization plumbing for apiGet and apiPost
+ * — never throws a raw fetch/DOMException, always a typed ApiError, so
+ * callers get a consistent shape whether the failure was a 4xx/5xx from
+ * Laravel or a network/timeout issue.
  */
-export async function apiGet<T>(path: string, options: GetOptions = {}): Promise<T> {
-  const { params, signal, timeoutMs = 10_000, cache, next } = options;
-  const url = buildUrl(path, params);
+async function request<T>(
+  url: string,
+  init: RequestInit,
+  options: { signal?: AbortSignal; timeoutMs?: number }
+): Promise<T> {
+  const { signal, timeoutMs = 10_000 } = options;
 
   const timeoutController = new AbortController();
   const timeoutId = setTimeout(() => timeoutController.abort(), timeoutMs);
   const combinedSignal = signal ? AbortSignal.any([signal, timeoutController.signal]) : timeoutController.signal;
 
   try {
-    const response = await fetch(url, {
-      headers: { Accept: 'application/json' },
-      signal: combinedSignal,
-      cache,
-      next,
-    });
+    const response = await fetch(url, { ...init, signal: combinedSignal });
 
     const payload: unknown = await response.json().catch(() => null);
 
@@ -112,4 +119,37 @@ export async function apiGet<T>(path: string, options: GetOptions = {}): Promise
   } finally {
     clearTimeout(timeoutId);
   }
+}
+
+/** GET a Laravel API v1 endpoint and parse its JSON response. */
+export async function apiGet<T>(path: string, options: GetOptions = {}): Promise<T> {
+  const { params, signal, timeoutMs, cache, next, headers } = options;
+  const url = buildUrl(path, params);
+
+  return request<T>(
+    url,
+    {
+      method: 'GET',
+      headers: { Accept: 'application/json', ...headers },
+      cache,
+      next,
+    },
+    { signal, timeoutMs }
+  );
+}
+
+/** POST a JSON body to a Laravel API v1 endpoint and parse its JSON response. */
+export async function apiPost<T>(path: string, body: unknown, options: PostOptions = {}): Promise<T> {
+  const { signal, timeoutMs, headers } = options;
+  const url = buildUrl(path);
+
+  return request<T>(
+    url,
+    {
+      method: 'POST',
+      headers: { Accept: 'application/json', 'Content-Type': 'application/json', ...headers },
+      body: JSON.stringify(body),
+    },
+    { signal, timeoutMs }
+  );
 }

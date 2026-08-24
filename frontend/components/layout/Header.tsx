@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { Suspense } from 'react';
+import { CartButton } from '@/components/cart/CartButton';
 import { MobileNav } from './MobileNav';
 import { SearchBar } from './SearchBar';
 
@@ -28,9 +29,12 @@ export function Header() {
           <SearchBar className="ml-auto hidden max-w-sm flex-1 md:block" />
         </Suspense>
 
-        <Suspense fallback={null}>
-          <MobileNav />
-        </Suspense>
+        <div className="ml-auto flex items-center gap-2 md:ml-0">
+          <CartButton />
+          <Suspense fallback={null}>
+            <MobileNav />
+          </Suspense>
+        </div>
       </div>
     </header>
   );

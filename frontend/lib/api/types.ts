@@ -122,3 +122,91 @@ export interface ApiErrorPayload {
   message: string;
   errors?: Record<string, string[]>;
 }
+
+/** GET /stores — matches App\Http\Resources\V1\StoreResource. */
+export interface Store {
+  id: number;
+  name: string;
+  slug: string;
+}
+
+/** GET /delivery-zones — matches App\Http\Resources\V1\DeliveryZoneResource. */
+export interface DeliveryZone {
+  id: number;
+  name: string;
+  /** Numeric string, e.g. "1000.00" — same convention as Product.price. */
+  fee: string;
+}
+
+export type OrderStatus = 'pending' | 'confirmed' | 'preparing' | 'ready' | 'delivered' | 'cancelled';
+export type PaymentStatus = 'pending' | 'paid';
+/** Whitelist enforced server-side by OrderService::PAYMENT_METHODS. */
+export type PaymentMethod = 'cash_on_delivery' | 'cash_in_store';
+
+/**
+ * A line item as returned by Laravel (App\Http\Resources\V1\OrderItemResource)
+ * — a historical snapshot, not live product data. `product_id` is
+ * nullable because order_items.product_id survives a product deletion.
+ */
+export interface OrderItem {
+  product_id: number | null;
+  product_name: string;
+  sku: string;
+  quantity: number;
+  unit_price: string;
+  subtotal: string;
+}
+
+/** Order.delivery.zone — only present when the order isn't a pickup. */
+export interface OrderDeliveryZone {
+  id: number;
+  name: string;
+  fee: string;
+}
+
+/** GET/POST /orders response body — matches App\Http\Resources\V1\OrderResource. */
+export interface Order {
+  order_number: string;
+  status: OrderStatus;
+  payment_status: PaymentStatus;
+  payment_method: PaymentMethod;
+  customer: {
+    name: string;
+    phone: string;
+    email: string | null;
+  };
+  store: {
+    id: number;
+    name: string;
+  };
+  delivery: {
+    is_pickup: boolean;
+    zone: OrderDeliveryZone | null;
+    address: string | null;
+  };
+  notes: string | null;
+  items: OrderItem[];
+  subtotal: string;
+  delivery_fee: string;
+  total: string;
+  currency: string;
+  created_at: string;
+}
+
+/**
+ * POST /orders request body. Deliberately excludes every price/total/stock
+ * field — Laravel recomputes all of that from products.price and real
+ * stock, it is never trusted from the client. See lib/api/orders.ts.
+ */
+export interface CreateOrderPayload {
+  items: Array<{ product_id: number; quantity: number }>;
+  store_id: number;
+  customer_name: string;
+  customer_phone: string;
+  customer_email?: string | null;
+  is_pickup: boolean;
+  delivery_zone_id?: number | null;
+  delivery_address?: string | null;
+  notes?: string | null;
+  payment_method: PaymentMethod;
+}

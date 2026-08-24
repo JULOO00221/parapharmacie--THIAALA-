@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
+import { ProductAddToCart } from '@/components/cart/ProductAddToCart';
 import { Badge } from '@/components/ui/Badge';
 import { PriceTag } from '@/components/product/PriceTag';
 import { ProductGallery } from '@/components/product/ProductGallery';
@@ -93,6 +94,8 @@ export default async function ProductPage({ params }: PageProps<'/produits/[slug
           </div>
 
           {product.short_description && <p className="mt-4 text-ink-muted">{product.short_description}</p>}
+
+          <ProductAddToCart product={product} />
 
           {product.tags.length > 0 && (
             <div className="mt-4 flex flex-wrap gap-2">
