@@ -473,9 +473,12 @@ class OrdersTest extends TestCase
     {
         $product = $this->productWithStock(1000, 5);
 
+        // 'orange_money' n'est pas encore une valeur acceptée par
+        // OrderService::PAYMENT_METHODS (intégration hors périmètre pour
+        // le moment) — 'wave', lui, est désormais valide (voir Phase 8).
         $this->postOrder($this->validPayload([
             'items' => [['product_id' => $product->id, 'quantity' => 1]],
-            'payment_method' => 'wave',
+            'payment_method' => 'orange_money',
         ]))->assertStatus(422)->assertJsonValidationErrors('payment_method');
     }
 

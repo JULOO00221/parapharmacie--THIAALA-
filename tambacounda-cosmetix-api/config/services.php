@@ -35,4 +35,23 @@ return [
         ],
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | Wave (mobile money — Sénégal)
+    |--------------------------------------------------------------------------
+    |
+    | mock=true (the default) routes every "wave" payment through
+    | MockWavePaymentProvider — never api.wave.com — so this integration
+    | works end-to-end without a Wave Developer account. api_key/webhook_secret
+    | stay unset (and unused) until Wave Developer access is granted and a
+    | real WavePaymentProvider is written; see PaymentProviderFactory.
+    |
+    */
+    'wave' => [
+        'mock' => (bool) env('WAVE_MOCK', true),
+        'frontend_url' => env('FRONTEND_URL', 'http://localhost:3000'),
+        'api_key' => env('WAVE_API_KEY'),
+        'webhook_secret' => env('WAVE_WEBHOOK_SECRET'),
+    ],
+
 ];

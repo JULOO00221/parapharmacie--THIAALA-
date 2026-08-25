@@ -32,12 +32,17 @@ class OrderService
     private const MAX_QUANTITY_PER_ITEM = 50;
 
     /**
-     * Only payment methods actually usable today (cash — no online payment
-     * provider is integrated yet). The FormRequest layer validates against
-     * this same list; OrderService re-checks it independently so it stays
-     * the authoritative source of truth even when called outside HTTP.
+     * Payment methods a checkout may select. 'wave' creates the order in
+     * the same pending/payment_status=pending state as cash — it is
+     * PaymentService::initiate() (called separately, after order
+     * creation) that actually opens a payment attempt; OrderService never
+     * talks to a payment provider itself. 'orange_money' is intentionally
+     * absent: out of scope until that integration is built. The
+     * FormRequest layer validates against this same list; OrderService
+     * re-checks it independently so it stays the authoritative source of
+     * truth even when called outside HTTP.
      */
-    public const PAYMENT_METHODS = ['cash_on_delivery', 'cash_in_store'];
+    public const PAYMENT_METHODS = ['cash_on_delivery', 'cash_in_store', 'wave'];
 
     private const ORDER_NUMBER_ATTEMPTS = 5;
 

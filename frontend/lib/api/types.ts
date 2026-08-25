@@ -165,8 +165,38 @@ export interface RegisterPayload {
 
 export type OrderStatus = 'pending' | 'confirmed' | 'preparing' | 'ready' | 'delivered' | 'cancelled';
 export type PaymentStatus = 'pending' | 'paid';
-/** Whitelist enforced server-side by OrderService::PAYMENT_METHODS. */
-export type PaymentMethod = 'cash_on_delivery' | 'cash_in_store';
+/** Whitelist enforced server-side by OrderService::PAYMENT_METHODS. 'orange_money' is intentionally absent — not wired up yet. */
+export type PaymentMethod = 'cash_on_delivery' | 'cash_in_store' | 'wave';
+
+/** Whitelist enforced server-side by PaymentService::SUPPORTED_PROVIDERS. */
+export type PaymentProvider = 'wave';
+
+/** A single payment ATTEMPT (payments table), distinct from Order.payment_status which is only a pending/paid summary. */
+export type PaymentAttemptStatus = 'pending' | 'processing' | 'paid' | 'failed' | 'expired' | 'refunded';
+
+/**
+ * POST /orders/{order}/payments and GET .../payments/{transactionId}
+ * response body — matches App\Http\Resources\V1\PaymentResource.
+ * Deliberately excludes the internal id, order_id, external_reference and
+ * raw metadata — never sent to the frontend. checkout_url is only
+ * present while the attempt is still open (pending/processing).
+ */
+export interface Payment {
+  transaction_id: string;
+  provider: PaymentProvider;
+  status: PaymentAttemptStatus;
+  amount: string;
+  currency: string;
+  checkout_url: string | null;
+  failure_reason: string | null;
+  expires_at: string | null;
+  paid_at: string | null;
+  created_at: string;
+}
+
+export interface InitiatePaymentPayload {
+  provider: PaymentProvider;
+}
 
 /**
  * A line item as returned by Laravel (App\Http\Resources\V1\OrderItemResource)

@@ -71,6 +71,39 @@ class OrderInfolist
                         ->color(fn (string $state) => OrderResource::PAYMENT_STATUS_COLORS[$state] ?? 'gray'),
                 ]),
 
+            Section::make('Paiements en ligne')
+                ->visible(fn ($record) => $record->payments->isNotEmpty())
+                ->schema([
+                    RepeatableEntry::make('payments')
+                        ->hiddenLabel()
+                        ->table([
+                            TableColumn::make('Fournisseur'),
+                            TableColumn::make('Référence interne'),
+                            TableColumn::make('Référence fournisseur'),
+                            TableColumn::make('Montant'),
+                            TableColumn::make('Statut'),
+                            TableColumn::make('Payé le'),
+                            TableColumn::make('Échec'),
+                            TableColumn::make('Expire le'),
+                        ])
+                        ->schema([
+                            TextEntry::make('provider')
+                                ->label('Fournisseur')
+                                ->formatStateUsing(fn (string $state) => OrderResource::PAYMENT_METHOD_LABELS[$state] ?? $state),
+                            TextEntry::make('transaction_id')->label('Référence interne')->copyable(),
+                            TextEntry::make('external_reference')->label('Référence fournisseur')->placeholder('—')->copyable(),
+                            TextEntry::make('amount')->label('Montant')->money('XOF'),
+                            TextEntry::make('status')
+                                ->label('Statut')
+                                ->badge()
+                                ->formatStateUsing(fn (string $state) => OrderResource::PAYMENT_ATTEMPT_STATUS_LABELS[$state] ?? $state)
+                                ->color(fn (string $state) => OrderResource::PAYMENT_ATTEMPT_STATUS_COLORS[$state] ?? 'gray'),
+                            TextEntry::make('paid_at')->label('Payé le')->dateTime()->placeholder('—'),
+                            TextEntry::make('failure_reason')->label('Échec')->placeholder('—'),
+                            TextEntry::make('expires_at')->label('Expire le')->dateTime()->placeholder('—'),
+                        ]),
+                ]),
+
             Section::make('Articles')
                 ->schema([
                     RepeatableEntry::make('items')

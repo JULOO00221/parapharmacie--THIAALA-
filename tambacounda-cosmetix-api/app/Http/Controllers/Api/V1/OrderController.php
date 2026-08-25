@@ -2,11 +2,11 @@
 
 namespace App\Http\Controllers\Api\V1;
 
+use App\Http\Concerns\AuthorizesOrderAccess;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Api\V1\OrderIndexRequest;
 use App\Http\Requests\Api\V1\StoreOrderRequest;
 use App\Http\Resources\V1\OrderResource;
-use App\Models\Order;
 use App\Services\OrderService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -14,6 +14,8 @@ use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 
 class OrderController extends Controller
 {
+    use AuthorizesOrderAccess;
+
     private const EAGER_LOAD = ['items', 'deliveryZone', 'store'];
 
     /**
@@ -61,29 +63,6 @@ class OrderController extends Controller
      */
     public function show(Request $request, string $orderNumber): OrderResource
     {
-        $order = Order::where('order_number', $orderNumber)
-            ->with(self::EAGER_LOAD)
-            ->first();
-
-        if ($order === null || ! $this->canView($request, $order)) {
-            abort(404);
-        }
-
-        return OrderResource::make($order);
-    }
-
-    private function canView(Request $request, Order $order): bool
-    {
-        $user = $request->user('sanctum');
-        if ($user !== null && $order->user_id === $user->id) {
-            return true;
-        }
-
-        $providedPhone = $request->header('X-Order-Phone');
-        if ($providedPhone !== null && hash_equals((string) $order->customer_phone, (string) $providedPhone)) {
-            return true;
-        }
-
-        return false;
+        return OrderResource::make($this->resolveOwnedOrder($request, $orderNumber, self::EAGER_LOAD));
     }
 }

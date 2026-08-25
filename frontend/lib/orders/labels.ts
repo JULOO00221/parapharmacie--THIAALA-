@@ -18,4 +18,5 @@ export const PAYMENT_STATUS_LABELS: Record<PaymentStatus, string> = {
 export const PAYMENT_METHOD_LABELS: Record<Order['payment_method'], string> = {
   cash_in_store: 'Paiement à la boutique',
   cash_on_delivery: 'Paiement à la livraison',
+  wave: 'Wave',
 };

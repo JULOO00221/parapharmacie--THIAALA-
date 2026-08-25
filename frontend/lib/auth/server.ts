@@ -88,3 +88,20 @@ export async function requireUser(): Promise<{ user: User; token: string }> {
 
   return { user, token: token as string };
 }
+
+/**
+ * Same as requireUser() but never redirects — for a page reachable by
+ * both guests and authenticated customers (e.g. the payment result
+ * pages), where a null user is a normal, expected case handled by the
+ * caller rather than a reason to bounce to /connexion.
+ */
+export async function getOptionalUser(): Promise<{ user: User | null; token: string | null }> {
+  const user = await getCurrentUser();
+  if (user === null) {
+    return { user: null, token: null };
+  }
+
+  const token = await getAuthToken();
+
+  return { user, token };
+}

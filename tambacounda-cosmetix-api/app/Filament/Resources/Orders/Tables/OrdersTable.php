@@ -118,6 +118,15 @@ class OrdersTable
             ->all();
     }
 
+    /**
+     * Réservé aux moyens de paiement cash (constaté physiquement par un
+     * humain) — un paiement en ligne (wave, à terme orange_money) ne
+     * doit jamais pouvoir être forcé "payé" manuellement ici : sa seule
+     * source de vérité est PaymentService (webhook réel ou, en
+     * développement, le simulateur mock), jamais un clic Filament.
+     */
+    private const CASH_PAYMENT_METHODS = ['cash_in_store', 'cash_on_delivery'];
+
     public static function markAsPaidAction(): Action
     {
         return Action::make('markAsPaid')
@@ -125,7 +134,9 @@ class OrdersTable
             ->icon(Heroicon::OutlinedBanknotes)
             ->color('success')
             ->requiresConfirmation()
-            ->visible(fn (Order $record): bool => $record->payment_status !== 'paid' && $record->status !== 'cancelled')
+            ->visible(fn (Order $record): bool => $record->payment_status !== 'paid'
+                && $record->status !== 'cancelled'
+                && in_array($record->payment_method, self::CASH_PAYMENT_METHODS, true))
             ->action(function (Order $record) {
                 app(OrderService::class)->markAsPaid($record);
 

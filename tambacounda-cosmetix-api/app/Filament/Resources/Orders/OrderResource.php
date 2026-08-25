@@ -73,6 +73,34 @@ class OrderResource extends Resource
     public const PAYMENT_METHOD_LABELS = [
         'cash_in_store' => 'Paiement à la boutique',
         'cash_on_delivery' => 'Paiement à la livraison',
+        'wave' => 'Wave',
+    ];
+
+    /**
+     * Statuts d'une TENTATIVE de paiement (table payments), à ne jamais
+     * confondre avec PAYMENT_STATUS_LABELS ci-dessus qui décrit
+     * orders.payment_status (seulement pending/paid, un résumé au niveau
+     * commande, jamais l'historique brut des tentatives).
+     *
+     * @var array<string, string>
+     */
+    public const PAYMENT_ATTEMPT_STATUS_LABELS = [
+        'pending' => 'En attente',
+        'processing' => 'En cours',
+        'paid' => 'Payé',
+        'failed' => 'Échoué',
+        'expired' => 'Expiré',
+        'refunded' => 'Remboursé',
+    ];
+
+    /** @var array<string, string> */
+    public const PAYMENT_ATTEMPT_STATUS_COLORS = [
+        'pending' => 'gray',
+        'processing' => 'info',
+        'paid' => 'success',
+        'failed' => 'danger',
+        'expired' => 'warning',
+        'refunded' => 'gray',
     ];
 
     /**

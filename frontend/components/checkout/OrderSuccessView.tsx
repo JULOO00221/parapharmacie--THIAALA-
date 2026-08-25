@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/Button';
 import { ApiError } from '@/lib/api/client';
 import { getOrder } from '@/lib/api/orders';
 import type { Order, OrderStatus } from '@/lib/api/types';
+import { PAYMENT_METHOD_LABELS } from '@/lib/orders/labels';
 import { formatPrice } from '@/lib/utils/format';
 
 /** Must match the key CheckoutView writes right before redirecting here. */
@@ -17,11 +18,6 @@ const STATUS_LABELS: Record<OrderStatus, string> = {
   ready: 'Prête pour le retrait',
   delivered: 'Retirée',
   cancelled: 'Annulée',
-};
-
-const PAYMENT_METHOD_LABELS: Record<Order['payment_method'], string> = {
-  cash_in_store: 'Paiement à la boutique',
-  cash_on_delivery: 'Paiement à la livraison',
 };
 
 type LoadState =

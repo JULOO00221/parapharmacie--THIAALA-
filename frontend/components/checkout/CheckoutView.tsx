@@ -8,14 +8,24 @@ import { Button } from '@/components/ui/Button';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { ApiError } from '@/lib/api/client';
 import { createOrder, createOrderViaAccount } from '@/lib/api/orders';
-import type { CreateOrderPayload, DeliveryZone, Store } from '@/lib/api/types';
+import { initiatePayment, initiatePaymentViaAccount } from '@/lib/api/payments';
+import type { CreateOrderPayload, DeliveryZone, PaymentMethod, Store } from '@/lib/api/types';
 import { formatPrice } from '@/lib/utils/format';
 import { OrderSummary } from './OrderSummary';
 
 /** sessionStorage key prefix the success page reads from — see OrderSuccessView. */
 const LAST_ORDER_KEY_PREFIX = 'tambacounda-cosmetix:order:';
+/**
+ * sessionStorage key prefix used ONLY by the guest Wave path — never the
+ * order itself (which the result pages must re-fetch fresh, never trust
+ * a stale local snapshot for payment status). Local browser storage,
+ * never sent over the network except as our own X-Order-Phone header —
+ * not the same thing as putting a phone number in a URL.
+ */
+const PAYMENT_PHONE_KEY_PREFIX = 'tambacounda-cosmetix:payment-phone:';
 
 type FulfillmentMode = 'pickup' | 'delivery';
+type SelectedPaymentMethod = 'cash' | 'wave';
 
 function fieldError(errors: Record<string, string[]>, field: string): string | undefined {
   return errors[field]?.[0];
@@ -47,6 +57,8 @@ export function CheckoutView({
   const [customerName, setCustomerName] = useState('');
   const [customerPhone, setCustomerPhone] = useState('');
   const [customerEmail, setCustomerEmail] = useState('');
+
+  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<SelectedPaymentMethod>('cash');
 
   const [submitting, setSubmitting] = useState(false);
   const [fieldErrors, setFieldErrors] = useState<Record<string, string[]>>({});
@@ -95,6 +107,9 @@ export function CheckoutView({
     setGeneralError(null);
 
     const isPickup = fulfillmentMode === 'pickup';
+    const isWave = selectedPaymentMethod === 'wave';
+
+    const paymentMethod: PaymentMethod = isWave ? 'wave' : isPickup ? 'cash_in_store' : 'cash_on_delivery';
 
     const payload: CreateOrderPayload = {
       items: items.map((item) => ({ product_id: item.productId, quantity: item.quantity })),
@@ -112,10 +127,7 @@ export function CheckoutView({
             delivery_zone_id: selectedZoneId ?? undefined,
             delivery_address: deliveryAddress.trim() || undefined,
           }),
-      // Le retrait se paie en boutique, la livraison se paie à la
-      // réception — deux moyens réellement distincts de la whitelist
-      // serveur (OrderService::PAYMENT_METHODS).
-      payment_method: isPickup ? 'cash_in_store' : 'cash_on_delivery',
+      payment_method: paymentMethod,
     };
 
     try {
@@ -123,20 +135,49 @@ export function CheckoutView({
       // proxy interne /api/account/orders pour que le serveur Next.js
       // attache le Bearer depuis le cookie HttpOnly — CheckoutView n'a
       // jamais accès au token lui-même. user_id n'est jamais envoyé dans
-      // les deux cas ; Laravel le déduit du token côté serveur.
+      // les deux cas ; Laravel le déduit du token côté serveur. Le
+      // MONTANT n'est jamais envoyé non plus — Laravel calcule order.total
+      // depuis products.price et c'est CE total, jamais un chiffre
+      // fourni ici, qui sera épinglé sur la tentative de paiement Wave.
       const order = isAuthenticated
         ? await createOrderViaAccount(payload, idempotencyKey)
         : await createOrder(payload, idempotencyKey);
 
-      // Stocké côté client uniquement pour que la page de succès affiche
-      // instantanément les montants réellement renvoyés par Laravel, sans
-      // nouvel appel — jamais utilisé comme source de vérité ailleurs.
-      window.sessionStorage.setItem(`${LAST_ORDER_KEY_PREFIX}${order.order_number}`, JSON.stringify(order));
+      if (!isWave) {
+        // Stocké côté client uniquement pour que la page de succès
+        // affiche instantanément les montants réellement renvoyés par
+        // Laravel, sans nouvel appel — jamais utilisé comme source de
+        // vérité ailleurs.
+        window.sessionStorage.setItem(`${LAST_ORDER_KEY_PREFIX}${order.order_number}`, JSON.stringify(order));
 
-      // Le panier n'est vidé qu'ICI, après le succès HTTP 201 réel —
-      // jamais avant, jamais de façon optimiste.
-      clearCart();
-      router.push(`/commande/succes/${order.order_number}`);
+        // Le panier n'est vidé qu'ICI, après le succès HTTP 201 réel —
+        // jamais avant, jamais de façon optimiste.
+        clearCart();
+        router.push(`/commande/succes/${order.order_number}`);
+        return;
+      }
+
+      // Chemin Wave : la commande existe déjà (pending) mais RIEN n'est
+      // confirmé — le panier reste intact tant que le paiement n'est pas
+      // vérifié côté serveur (voir PaymentResultView). Le téléphone est
+      // conservé en sessionStorage (jamais dans une URL) pour permettre
+      // à un invité de re-prouver son identité sur la page de résultat.
+      window.sessionStorage.setItem(`${PAYMENT_PHONE_KEY_PREFIX}${order.order_number}`, customerPhone.trim());
+
+      const payment = isAuthenticated
+        ? await initiatePaymentViaAccount(order.order_number, 'wave')
+        : await initiatePayment(order.order_number, 'wave', { phone: customerPhone.trim() });
+
+      if (!payment.checkout_url) {
+        setSubmitting(false);
+        setGeneralError("Le paiement Wave n'a pas pu être initié. Veuillez réessayer.");
+        return;
+      }
+
+      // Navigation complète (pas router.push) : checkout_url pointera un
+      // jour vers pay.wave.com, un domaine externe — window.location.href
+      // fonctionne aussi bien pour la page de simulation locale.
+      window.location.href = payment.checkout_url;
     } catch (error) {
       setSubmitting(false);
 
@@ -413,12 +454,47 @@ export function CheckoutView({
             <h2 id="checkout-payment-heading" className="text-lg font-semibold text-ink">
               Paiement
             </h2>
-            <p className="mt-2 text-sm text-ink-muted">
-              {fulfillmentMode === 'pickup'
-                ? 'Paiement à la boutique, au moment du retrait.'
-                : 'Paiement à la livraison, au moment de la réception.'}{' '}
-              Aucun paiement en ligne n&apos;est requis pour valider cette commande.
-            </p>
+
+            <fieldset className="mt-4 space-y-3">
+              <legend className="sr-only">Choisir le moyen de paiement</legend>
+
+              <label className="flex cursor-pointer items-start gap-3 rounded-xl border border-border p-4 has-[:checked]:border-brand-600 has-[:checked]:bg-brand-50">
+                <input
+                  type="radio"
+                  name="payment_method"
+                  checked={selectedPaymentMethod === 'cash'}
+                  onChange={() => setSelectedPaymentMethod('cash')}
+                  className="mt-1 h-4 w-4 accent-brand-600"
+                />
+                <span>
+                  <span className="block text-sm font-semibold text-ink">
+                    {fulfillmentMode === 'pickup' ? 'Paiement à la boutique' : 'Paiement à la livraison'}
+                  </span>
+                  <span className="mt-0.5 block text-sm text-ink-muted">
+                    {fulfillmentMode === 'pickup'
+                      ? 'Réglez en espèces au moment du retrait.'
+                      : 'Réglez en espèces au moment de la réception.'}{' '}
+                    Aucun paiement en ligne requis.
+                  </span>
+                </span>
+              </label>
+
+              <label className="flex cursor-pointer items-start gap-3 rounded-xl border border-border p-4 has-[:checked]:border-brand-600 has-[:checked]:bg-brand-50">
+                <input
+                  type="radio"
+                  name="payment_method"
+                  checked={selectedPaymentMethod === 'wave'}
+                  onChange={() => setSelectedPaymentMethod('wave')}
+                  className="mt-1 h-4 w-4 accent-brand-600"
+                />
+                <span>
+                  <span className="block text-sm font-semibold text-ink">Wave</span>
+                  <span className="mt-0.5 block text-sm text-ink-muted">
+                    Payez en ligne avec Wave — vous serez redirigé pour confirmer le paiement.
+                  </span>
+                </span>
+              </label>
+            </fieldset>
           </section>
         </div>
 
@@ -426,7 +502,11 @@ export function CheckoutView({
           <OrderSummary items={items} subtotal={subtotal} deliveryFee={deliveryFeeEstimate} />
 
           <Button type="submit" size="lg" disabled={submitting} className="mt-4 w-full">
-            {submitting ? 'Envoi en cours…' : 'Confirmer ma commande'}
+            {submitting
+              ? 'Envoi en cours…'
+              : selectedPaymentMethod === 'wave'
+                ? 'Payer avec Wave'
+                : 'Confirmer ma commande'}
           </Button>
         </div>
       </form>
