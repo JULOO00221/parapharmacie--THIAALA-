@@ -54,4 +54,28 @@ return [
         'webhook_secret' => env('WAVE_WEBHOOK_SECRET'),
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | WhatsApp
+    |--------------------------------------------------------------------------
+    |
+    | mock=true (the default) routes every notification through
+    | MockWhatsAppProvider — never a real WhatsApp Business/Cloud API call
+    | — so the whole notification system works end-to-end without WhatsApp
+    | Business API access. api_url/api_token/phone_number_id stay unset
+    | (and unused) until that access is granted and a real
+    | WhatsAppProviderInterface implementation is written; see
+    | WhatsAppProviderFactory. manager_phone is never hardcoded anywhere
+    | in the codebase — always read from here.
+    |
+    */
+    'whatsapp' => [
+        'mock' => (bool) env('WHATSAPP_MOCK', true),
+        'provider' => env('WHATSAPP_PROVIDER', 'mock'),
+        'api_url' => env('WHATSAPP_API_URL'),
+        'api_token' => env('WHATSAPP_API_TOKEN'),
+        'phone_number_id' => env('WHATSAPP_PHONE_NUMBER_ID'),
+        'manager_phone' => env('WHATSAPP_MANAGER_PHONE'),
+    ],
+
 ];

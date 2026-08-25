@@ -12,6 +12,8 @@ use App\Exceptions\Order\ProductNotActiveException;
 use App\Exceptions\Order\ProductNotFoundException;
 use App\Exceptions\Order\StoreNotActiveException;
 use App\Exceptions\Order\StoreNotFoundException;
+use App\Events\Order\OrderCreated;
+use App\Events\Order\OrderStatusChanged;
 use App\Models\DeliveryZone;
 use App\Models\Order;
 use App\Models\Product;
@@ -219,7 +221,14 @@ class OrderService
 
         $order->items()->createMany($orderItems);
 
-        return $order->load('items');
+        $order->load('items');
+
+        // Uniquement ici, jamais sur le chemin de rejeu idempotent de
+        // createOrder() — une Idempotency-Key déjà vue retourne la
+        // commande existante sans jamais atteindre buildOrder().
+        event(new OrderCreated($order));
+
+        return $order;
     }
 
     /**
@@ -459,6 +468,13 @@ class OrderService
             }
 
             $locked->update(['status' => $to]);
+
+            // Choke point unique de toute transition (confirm/preparing/
+            // ready/delivered/cancel) — jamais atteint si la transition
+            // est refusée ci-dessus. Aucune règle métier ici : le
+            // WhatsAppNotificationService décide seul, via ses listeners,
+            // ce que $to signifie.
+            event(new OrderStatusChanged($locked, $from, $to));
 
             return $locked->refresh();
         });

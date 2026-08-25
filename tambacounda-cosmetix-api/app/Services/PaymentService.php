@@ -8,6 +8,7 @@ use App\Exceptions\Payment\OrderNotPayableException;
 use App\Exceptions\Payment\PaymentNotFoundException;
 use App\Exceptions\Payment\PaymentProviderMismatchException;
 use App\Exceptions\Payment\UnsupportedPaymentProviderException;
+use App\Events\Payment\PaymentConfirmed;
 use App\Models\Order;
 use App\Models\Payment;
 use App\Payments\PaymentProviderFactory;
@@ -197,7 +198,16 @@ class PaymentService
             // seul point d'entrée pour la transition de statut + le stock.
             $orderService = app(OrderService::class);
             $orderService->markAsPaid($order);
+            // confirm() lève lui-même OrderStatusChanged(to: 'confirmed')
+            // — la notification "Commande confirmée" est donc déjà
+            // couverte par ce chemin, qu'elle vienne du cash ou de Wave.
+            // Aucune logique dupliquée ici.
             $orderService->confirm($order->fresh());
+
+            // Distinct de "Commande confirmée" : "Paiement confirmé"
+            // n'a de sens que pour un paiement en ligne. Jamais levé sur
+            // le retour idempotent en tout début de cette méthode.
+            event(new PaymentConfirmed($locked));
 
             return $locked->refresh();
         });
