@@ -79,7 +79,7 @@ export function PaymentResultView({
       <div className="rounded-2xl border border-border bg-surface-raised p-6 text-center sm:p-8">
         {state.status === 'loading' && (
           <>
-            <h1 className="text-xl font-bold text-ink">Vérification du paiement…</h1>
+            <h1 className="font-display text-xl font-bold text-ink">Vérification du paiement…</h1>
             <p className="mt-3 text-sm text-ink-muted">
               Nous confirmons l&apos;état de votre paiement auprès du serveur, merci de patienter.
             </p>
@@ -88,7 +88,7 @@ export function PaymentResultView({
 
         {state.status === 'unresolvable' && (
           <>
-            <h1 className="text-xl font-bold text-ink">Impossible de vérifier automatiquement</h1>
+            <h1 className="font-display text-xl font-bold text-ink">Impossible de vérifier automatiquement</h1>
             <p className="mt-3 text-sm text-ink-muted">
               Nous n&apos;avons pas pu confirmer automatiquement l&apos;état de cette commande depuis cet appareil.
               Vous pouvez la retrouver avec votre numéro de commande et votre numéro de téléphone.
@@ -115,7 +115,7 @@ function ResolvedResult({ order, landedOn }: { order: Order; landedOn: 'success'
             <path d="M4 10.5l4 4 8-9" strokeLinecap="round" strokeLinejoin="round" />
           </svg>
         </div>
-        <h1 className="mt-4 text-2xl font-bold text-ink">Paiement confirmé</h1>
+        <h1 className="mt-4 font-display text-2xl font-bold text-ink">Paiement confirmé</h1>
         <p className="mt-3 text-sm text-ink-muted">Numéro de commande</p>
         <p className="text-lg font-semibold text-brand-700">{order.order_number}</p>
         <p className="mt-4 text-sm text-ink-muted">Montant réglé : {formatPrice(order.total)}</p>
@@ -129,7 +129,7 @@ function ResolvedResult({ order, landedOn }: { order: Order; landedOn: 'success'
   if (order.status === 'cancelled') {
     return (
       <>
-        <h1 className="text-xl font-bold text-ink">Commande annulée</h1>
+        <h1 className="font-display text-xl font-bold text-ink">Commande annulée</h1>
         <p className="mt-3 text-sm text-ink-muted">
           Le paiement n&apos;a pas abouti à temps et la commande {order.order_number} a été annulée. Vous pouvez
           recommencer votre commande.
@@ -143,7 +143,7 @@ function ResolvedResult({ order, landedOn }: { order: Order; landedOn: 'success'
 
   return (
     <>
-      <h1 className="text-xl font-bold text-ink">{landedOn === 'success' ? 'Paiement non confirmé' : 'Paiement échoué'}</h1>
+      <h1 className="font-display text-xl font-bold text-ink">{landedOn === 'success' ? 'Paiement non confirmé' : 'Paiement échoué'}</h1>
       <p className="mt-3 text-sm text-ink-muted">
         Le paiement de la commande {order.order_number} n&apos;a pas encore été confirmé. Vous pouvez suivre son
         état ou réessayer votre commande.

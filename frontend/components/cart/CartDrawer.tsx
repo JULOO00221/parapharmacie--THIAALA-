@@ -43,7 +43,7 @@ export function CartDrawer() {
         className="relative flex h-full w-full max-w-md flex-col bg-surface-raised shadow-xl"
       >
         <div className="flex items-center justify-between border-b border-border px-4 py-4 sm:px-6">
-          <h2 className="text-lg font-semibold text-ink">Mon panier</h2>
+          <h2 className="font-display text-lg font-semibold text-ink">Mon panier</h2>
           <button
             ref={closeButtonRef}
             type="button"

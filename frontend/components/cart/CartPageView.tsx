@@ -11,7 +11,7 @@ export function CartPageView() {
 
   return (
     <div className="mx-auto max-w-3xl px-4 py-10 sm:px-6">
-      <h1 className="text-2xl font-bold text-ink sm:text-3xl">Mon panier</h1>
+      <h1 className="font-display text-2xl font-bold text-ink sm:text-3xl">Mon panier</h1>
 
       {items.length === 0 ? (
         <div className="mt-8">

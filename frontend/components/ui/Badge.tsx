@@ -6,6 +6,7 @@ const TONES = {
   warning: 'bg-amber-50 text-[color:var(--color-warning)]',
   danger: 'bg-red-50 text-[color:var(--color-danger)]',
   neutral: 'bg-brand-50 text-brand-700',
+  promo: 'bg-promo-100 text-promo-600',
 } as const;
 
 export function Badge({ tone = 'neutral', children }: { tone?: keyof typeof TONES; children: ReactNode }) {

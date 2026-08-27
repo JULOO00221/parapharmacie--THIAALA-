@@ -21,7 +21,7 @@ export function OrderSummary({
 
   return (
     <div className="rounded-2xl border border-border bg-surface-raised p-4 sm:p-6">
-      <h2 className="text-lg font-semibold text-ink">Récapitulatif</h2>
+      <h2 className="font-display text-lg font-semibold text-ink">Récapitulatif</h2>
 
       <ul className="mt-4 divide-y divide-border">
         {items.map((item) => (
@@ -48,9 +48,9 @@ export function OrderSummary({
           <span>Livraison</span>
           <span>{formatPrice(deliveryFee)}</span>
         </div>
-        <div className="flex items-center justify-between text-base font-semibold text-ink">
+        <div className="flex items-center justify-between text-lg font-bold text-ink">
           <span>Total</span>
-          <span>{formatPrice(total)}</span>
+          <span className="text-brand-700">{formatPrice(total)}</span>
         </div>
       </div>
 

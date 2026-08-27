@@ -25,7 +25,14 @@ export function CartItemRow({ item }: { item: CartItemType }) {
         {/* Prix affiché uniquement pour l'expérience d'achat — jamais
             transmis comme prix fiable au checkout, Laravel recalcule
             toujours depuis products.price. */}
-        <p className="text-sm text-ink-muted">{formatPrice(item.price)}</p>
+        <div className="flex items-baseline justify-between gap-2">
+          <p className="text-xs text-ink-muted">
+            {formatPrice(item.price)} × {item.quantity}
+          </p>
+          <p className="text-sm font-semibold text-ink">
+            {formatPrice(Number.parseFloat(item.price) * item.quantity)}
+          </p>
+        </div>
 
         <div className="mt-1 flex items-center justify-between">
           <div className="flex items-center gap-1 rounded-full border border-border">

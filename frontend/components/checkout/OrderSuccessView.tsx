@@ -78,7 +78,7 @@ export function OrderSuccessView({ orderNumber }: { orderNumber: string }) {
           </svg>
         </div>
 
-        <h1 className="mt-4 text-2xl font-bold text-ink">Commande enregistrée</h1>
+        <h1 className="mt-4 font-display text-2xl font-bold text-ink">Commande enregistrée</h1>
 
         <p className="mt-3 text-sm text-ink-muted">Numéro de commande</p>
         <p className="text-lg font-semibold text-brand-700">{orderNumber}</p>

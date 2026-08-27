@@ -44,7 +44,7 @@ export function MockWaveCheckout({ transactionId, orderNumber }: { transactionId
         Simulateur Wave (environnement de développement) — aucun appel réel à Wave n&apos;est effectué ici.
       </div>
 
-      <h1 className="mt-6 text-xl font-bold text-ink">Paiement Wave</h1>
+      <h1 className="mt-6 font-display text-xl font-bold text-ink">Paiement Wave</h1>
       <p className="mt-2 text-sm text-ink-muted">Référence de la tentative : {transactionId}</p>
 
       {error && (

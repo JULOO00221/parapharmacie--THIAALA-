@@ -31,6 +31,15 @@ function fieldError(errors: Record<string, string[]>, field: string): string | u
   return errors[field]?.[0];
 }
 
+function SubmitSpinner() {
+  return (
+    <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" className="h-4 w-4 animate-spin">
+      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 0 1 8-8V0C5.373 0 0 5.373 0 12h4Z" />
+    </svg>
+  );
+}
+
 export function CheckoutView({
   stores,
   deliveryZones,
@@ -68,6 +77,14 @@ export function CheckoutView({
   const phoneInputRef = useRef<HTMLInputElement>(null);
   const addressInputRef = useRef<HTMLTextAreaElement>(null);
 
+  // Belt-and-suspenders against a double submission: the on-page button and
+  // the mobile sticky bar's button both target the SAME <form> (via the
+  // `form` attribute) and therefore the same handleSubmit — this ref is a
+  // synchronous guard on top of the existing `submitting` state check,
+  // closing the tiny window where two near-simultaneous clicks could both
+  // read `submitting` as false before React re-renders the disabled state.
+  const submittingRef = useRef(false);
+
   // Générée une seule fois (initialiseur paresseux de useState), jamais
   // recréée à chaque re-render, et réutilisée pour toute nouvelle
   // tentative de CETTE soumission logique (ex. après un échec réseau) —
@@ -100,8 +117,9 @@ export function CheckoutView({
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (submitting || !store) return;
+    if (submittingRef.current || submitting || !store) return;
 
+    submittingRef.current = true;
     setSubmitting(true);
     setFieldErrors({});
     setGeneralError(null);
@@ -169,6 +187,7 @@ export function CheckoutView({
         : await initiatePayment(order.order_number, 'wave', { phone: customerPhone.trim() });
 
       if (!payment.checkout_url) {
+        submittingRef.current = false;
         setSubmitting(false);
         setGeneralError("Le paiement Wave n'a pas pu être initié. Veuillez réessayer.");
         return;
@@ -179,6 +198,7 @@ export function CheckoutView({
       // fonctionne aussi bien pour la page de simulation locale.
       window.location.href = payment.checkout_url;
     } catch (error) {
+      submittingRef.current = false;
       setSubmitting(false);
 
       if (error instanceof ApiError) {
@@ -223,12 +243,23 @@ export function CheckoutView({
 
   const deliveryFeeEstimate =
     fulfillmentMode === 'delivery' && selectedZone ? Number.parseFloat(selectedZone.fee) : 0;
+  const totalEstimate = subtotal + deliveryFeeEstimate;
+  const submitLabel = submitting
+    ? 'Envoi en cours…'
+    : selectedPaymentMethod === 'wave'
+      ? 'Payer avec Wave'
+      : 'Confirmer ma commande';
 
   return (
     <div className="mx-auto max-w-5xl px-4 py-10 sm:px-6">
-      <h1 className="text-2xl font-bold text-ink sm:text-3xl">Finaliser ma commande</h1>
+      <h1 className="font-display text-2xl font-bold text-ink sm:text-3xl">Finaliser ma commande</h1>
 
-      <form onSubmit={handleSubmit} noValidate className="mt-8 flex flex-col gap-8 lg:flex-row lg:items-start">
+      <form
+        id="checkout-form"
+        onSubmit={handleSubmit}
+        noValidate
+        className="mt-8 flex flex-col gap-8 lg:flex-row lg:items-start"
+      >
         <div className="flex-1 space-y-8">
           {generalError && (
             <div role="alert" className="rounded-xl border border-[color:var(--color-danger)]/30 bg-red-50 px-4 py-3 text-sm text-[color:var(--color-danger)]">
@@ -237,7 +268,8 @@ export function CheckoutView({
           )}
 
           <section aria-labelledby="checkout-customer-heading" className="rounded-2xl border border-border bg-surface-raised p-4 sm:p-6">
-            <h2 id="checkout-customer-heading" className="text-lg font-semibold text-ink">
+            <h2 id="checkout-customer-heading" className="flex items-center gap-2.5 text-lg font-semibold text-ink">
+              <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-brand-600 text-xs font-semibold text-white">1</span>
               Vos coordonnées
             </h2>
 
@@ -318,7 +350,8 @@ export function CheckoutView({
           </section>
 
           <section aria-labelledby="checkout-store-heading" className="rounded-2xl border border-border bg-surface-raised p-4 sm:p-6">
-            <h2 id="checkout-store-heading" className="text-lg font-semibold text-ink">
+            <h2 id="checkout-store-heading" className="flex items-center gap-2.5 text-lg font-semibold text-ink">
+              <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-brand-600 text-xs font-semibold text-white">2</span>
               Boutique
             </h2>
 
@@ -346,7 +379,8 @@ export function CheckoutView({
           </section>
 
           <section aria-labelledby="checkout-fulfillment-heading" className="rounded-2xl border border-border bg-surface-raised p-4 sm:p-6">
-            <h2 id="checkout-fulfillment-heading" className="text-lg font-semibold text-ink">
+            <h2 id="checkout-fulfillment-heading" className="flex items-center gap-2.5 text-lg font-semibold text-ink">
+              <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-brand-600 text-xs font-semibold text-white">3</span>
               Mode de réception
             </h2>
 
@@ -451,7 +485,8 @@ export function CheckoutView({
           </section>
 
           <section aria-labelledby="checkout-payment-heading" className="rounded-2xl border border-border bg-surface-raised p-4 sm:p-6">
-            <h2 id="checkout-payment-heading" className="text-lg font-semibold text-ink">
+            <h2 id="checkout-payment-heading" className="flex items-center gap-2.5 text-lg font-semibold text-ink">
+              <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-brand-600 text-xs font-semibold text-white">4</span>
               Paiement
             </h2>
 
@@ -502,14 +537,48 @@ export function CheckoutView({
           <OrderSummary items={items} subtotal={subtotal} deliveryFee={deliveryFeeEstimate} />
 
           <Button type="submit" size="lg" disabled={submitting} className="mt-4 w-full">
-            {submitting
-              ? 'Envoi en cours…'
-              : selectedPaymentMethod === 'wave'
-                ? 'Payer avec Wave'
-                : 'Confirmer ma commande'}
+            {submitting && <SubmitSpinner />}
+            {submitLabel}
           </Button>
         </div>
       </form>
+
+      {/*
+        Mobile-only persistent total + submit bar. `sticky` (not `fixed`) is
+        deliberate: a `fixed` bar has no way to know when the page's real
+        Footer is about to be reached — at true max-scroll, the Footer's
+        bottom edge is ALWAYS exactly flush with the viewport's bottom edge
+        (that's what "scrolled to the bottom" means, independent of any
+        spacer height), so a `fixed` bar unavoidably covers the last bit of
+        Footer content no matter how much padding precedes it. `sticky`
+        instead only holds the bar to the viewport bottom while its
+        containing block (this outer page div, which ends right before the
+        real Footer) still has room below the current scroll position —
+        it releases naturally just before the Footer, never covering it.
+        Targets the SAME <form> via the `form` attribute (native HTML — no
+        click handler, no duplicated submit logic) so it fires the exact
+        same handleSubmit as the on-page button above. Disabled state
+        mirrors the on-page button exactly, and handleSubmit itself guards
+        (submittingRef + submitting) against either button — or both in
+        quick succession — double-firing.
+      */}
+      <div className="sticky bottom-0 z-30 -mx-4 border-t border-border bg-surface-raised p-3 shadow-lg lg:hidden sm:-mx-6">
+        <div className="mx-auto flex max-w-lg items-center justify-between gap-3">
+          <div className="min-w-0">
+            <p className="text-xs text-ink-muted">Total</p>
+            <p className="text-lg font-bold text-brand-700">{formatPrice(totalEstimate)}</p>
+          </div>
+          <button
+            type="submit"
+            form="checkout-form"
+            disabled={submitting}
+            className="inline-flex shrink-0 items-center justify-center gap-2 rounded-full bg-brand-600 px-6 py-3 text-sm font-medium text-white transition-colors hover:bg-brand-700 disabled:opacity-50 disabled:pointer-events-none"
+          >
+            {submitting && <SubmitSpinner />}
+            {submitLabel}
+          </button>
+        </div>
+      </div>
     </div>
   );
 }

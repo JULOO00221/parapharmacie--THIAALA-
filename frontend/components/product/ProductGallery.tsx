@@ -3,20 +3,36 @@
 import Image from 'next/image';
 import { useState } from 'react';
 import type { ProductImage } from '@/lib/api/types';
+import { ProductBadges } from './ProductBadges';
 import { ProductImagePlaceholder } from './ProductImagePlaceholder';
 
-export function ProductGallery({ images, productName }: { images: ProductImage[]; productName: string }) {
+export function ProductGallery({
+  images,
+  productName,
+  featured = false,
+  percentOff = null,
+}: {
+  images: ProductImage[];
+  productName: string;
+  featured?: boolean;
+  percentOff?: number | null;
+}) {
   const [activeIndex, setActiveIndex] = useState(0);
 
   if (images.length === 0) {
-    return <ProductImagePlaceholder className="aspect-square w-full rounded-2xl" />;
+    return (
+      <div className="relative">
+        <ProductImagePlaceholder className="aspect-square w-full rounded-2xl border border-border" />
+        <ProductBadges featured={featured} percentOff={percentOff} />
+      </div>
+    );
   }
 
   const active = images[activeIndex];
 
   return (
     <div>
-      <div className="relative aspect-square w-full overflow-hidden rounded-2xl bg-brand-50">
+      <div className="relative aspect-square w-full overflow-hidden rounded-2xl border border-border bg-brand-50">
         <Image
           src={active.url}
           alt={active.alt_text ?? productName}
@@ -25,6 +41,7 @@ export function ProductGallery({ images, productName }: { images: ProductImage[]
           className="object-cover"
           priority
         />
+        <ProductBadges featured={featured} percentOff={percentOff} />
       </div>
 
       {images.length > 1 && (

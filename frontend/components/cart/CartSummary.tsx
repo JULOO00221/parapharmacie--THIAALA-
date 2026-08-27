@@ -8,9 +8,9 @@ import { formatPrice } from '@/lib/utils/format';
 export function CartSummary({ subtotal }: { subtotal: number }) {
   return (
     <div>
-      <div className="flex items-center justify-between text-base font-semibold text-ink">
+      <div className="flex items-center justify-between text-lg font-bold text-ink">
         <span>Sous-total</span>
-        <span>{formatPrice(subtotal)}</span>
+        <span className="text-brand-700">{formatPrice(subtotal)}</span>
       </div>
       <p className="mt-1 text-xs text-ink-muted">
         Frais de livraison et total définitif calculés à l&apos;étape suivante.
