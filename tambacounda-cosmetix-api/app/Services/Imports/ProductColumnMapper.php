@@ -24,6 +24,7 @@ class ProductColumnMapper
         'compare_at_price' => ['prix barre', 'prix barré', 'compare_at_price', 'ancien prix'],
         'tax_rate' => ['tva', 'tax_rate', 'taux tva'],
         'category' => ['categorie', 'catégorie', 'category'],
+        'subcategory' => ['sous-categorie', 'sous_categorie', 'sous-catégorie', 'subcategory'],
         'brand' => ['marque', 'brand'],
         'short_description' => ['description courte', 'short_description'],
         'description' => ['description', 'description complete', 'description complète'],

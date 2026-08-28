@@ -1,3 +1,4 @@
+import Image from 'next/image';
 import Link from 'next/link';
 
 export function Footer() {
@@ -6,9 +7,18 @@ export function Footer() {
       <div className="mx-auto max-w-6xl px-4 py-12 sm:px-6">
         <div className="grid grid-cols-1 gap-10 sm:grid-cols-3">
           <div>
-            <p className="text-lg font-semibold">Tambacounda Cosmetix</p>
+            {/*
+              Icon-only mark (public/logo-icon.png), background matted to
+              transparent — the full lockup's wordmark gradient fades into a
+              dark green that loses contrast against this footer's own dark
+              green, so only the gold icon (which stays legible on dark)
+              repeats here. Discreet on purpose: the full logo already
+              anchors the Header on every page.
+            */}
+            <Image src="/logo-icon.png" alt="" aria-hidden="true" width={36} height={27} className="mb-3 opacity-90" />
+            <p className="text-lg font-semibold">Parapharmacie THIAALA</p>
             <p className="mt-2 max-w-xs text-sm text-brand-100">
-              Parapharmacie et cosmétiques au Sénégal — produits de soin sélectionnés avec soin.
+              Parapharmacie au Sénégal — produits de soin sélectionnés avec soin.
             </p>
           </div>
 
@@ -41,7 +51,7 @@ export function Footer() {
         </div>
 
         <p className="mt-10 border-t border-brand-700 pt-6 text-xs text-brand-200">
-          © {new Date().getFullYear()} Tambacounda Cosmetix. Tous droits réservés.
+          © {new Date().getFullYear()} Parapharmacie THIAALA. Tous droits réservés.
         </p>
       </div>
     </footer>

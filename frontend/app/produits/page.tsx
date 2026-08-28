@@ -11,7 +11,7 @@ export const dynamic = 'force-dynamic';
 
 export const metadata: Metadata = {
   title: 'Tous les produits',
-  description: 'Parcourez le catalogue complet Tambacounda Cosmetix : soins du visage, du corps, cheveux et hygiène.',
+  description: 'Parcourez le catalogue complet Parapharmacie THIAALA : soins du visage, du corps, cheveux et hygiène.',
   alternates: { canonical: '/produits' },
 };
 

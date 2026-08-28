@@ -32,5 +32,12 @@ export default async function PaymentSuccessPage({ searchParams }: PageProps<'/p
   const { token } = await getOptionalUser();
   const initialOrder = token !== null ? await getOrder(orderNumber, { token }).catch(() => null) : null;
 
-  return <PaymentResultView orderNumber={orderNumber} landedOn="success" initialOrder={initialOrder} />;
+  return (
+    <PaymentResultView
+      orderNumber={orderNumber}
+      landedOn="success"
+      initialOrder={initialOrder}
+      isAuthenticated={token !== null}
+    />
+  );
 }

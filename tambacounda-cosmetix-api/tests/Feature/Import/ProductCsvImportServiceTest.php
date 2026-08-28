@@ -31,7 +31,7 @@ class ProductCsvImportServiceTest extends TestCase
 
         $this->service = new ProductCsvImportService(new ProductService());
         $this->store = Store::factory()->create();
-        $this->category = ProductCategory::factory()->create(['name' => 'Soins du visage']);
+        $this->category = ProductCategory::factory()->create(['name' => 'Soins du visage', 'slug' => 'soins-du-visage']);
     }
 
     private function writeCsv(string $header, array $lines, string $delimiter = ';'): string
@@ -49,19 +49,19 @@ class ProductCsvImportServiceTest extends TestCase
 
     private function header(): string
     {
-        return 'Nom;SKU;Code-barres;Prix;Prix d\'achat;Prix barré;TVA;Catégorie;Marque;Description courte;Description;Actif;Mis en avant;Ordonnance;Poids;Tags;Stock';
+        return 'Nom;SKU;Code-barres;Prix;Prix d\'achat;Prix barré;TVA;Catégorie;Sous-catégorie;Marque;Description courte;Description;Actif;Mis en avant;Ordonnance;Poids;Tags;Stock';
     }
 
     /**
-     * name;sku;barcode;price;cost_price;compare_at_price;tax_rate;category;brand;short_desc;desc;is_active;is_featured;prescription;weight;tags;stock
+     * name;sku;barcode;price;cost_price;compare_at_price;tax_rate;category;subcategory;brand;short_desc;desc;is_active;is_featured;prescription;weight;tags;stock
      */
     private function row(array $overrides = []): string
     {
         $defaults = [
-            'Savon test', 'SKU-TEST-1', '', '2000', '', '', '', 'Soins du visage', '', '', '', '', '', '', '', '', '',
+            'Savon test', 'SKU-TEST-1', '', '2000', '', '', '', 'Soins du visage', '', '', '', '', '', '', '', '', '', '',
         ];
 
-        $keys = ['name', 'sku', 'barcode', 'price', 'cost_price', 'compare_at_price', 'tax_rate', 'category', 'brand', 'short', 'desc', 'active', 'featured', 'prescription', 'weight', 'tags', 'stock'];
+        $keys = ['name', 'sku', 'barcode', 'price', 'cost_price', 'compare_at_price', 'tax_rate', 'category', 'subcategory', 'brand', 'short', 'desc', 'active', 'featured', 'prescription', 'weight', 'tags', 'stock'];
         $values = array_combine($keys, $defaults);
         $values = array_merge($values, $overrides);
 
@@ -215,6 +215,87 @@ class ProductCsvImportServiceTest extends TestCase
 
         $this->assertSame(1, $report->categoriesCreated);
         $this->assertDatabaseHas('product_categories', ['name' => 'Categorie Toute Neuve']);
+    }
+
+    // 8b. Category + subcategory both new: subcategory gets parent_id, product attaches to the subcategory.
+    public function test_new_category_and_new_subcategory_are_both_created_with_correct_parent_link(): void
+    {
+        $path = $this->writeCsv($this->header(), [
+            $this->row(['sku' => 'SKU-SUBCAT-1', 'category' => 'Soins du corps', 'subcategory' => 'Huiles corps']),
+        ]);
+
+        $mapping = $this->service->analyze($path)['mapping'];
+        $report = $this->service->import($path, $mapping, $this->store, $this->defaultPolicies());
+
+        $this->assertSame(2, $report->categoriesCreated);
+
+        $parent = ProductCategory::where('name', 'Soins du corps')->firstOrFail();
+        $child = ProductCategory::where('name', 'Huiles corps')->firstOrFail();
+
+        $this->assertNull($parent->parent_id);
+        $this->assertSame($parent->id, $child->parent_id);
+
+        $product = Product::where('sku', 'SKU-SUBCAT-1')->firstOrFail();
+        $this->assertSame($child->id, $product->category_id);
+    }
+
+    // 8c. Root category already exists: only the subcategory is created, correctly linked.
+    public function test_existing_category_with_new_subcategory_only_creates_the_subcategory(): void
+    {
+        $path = $this->writeCsv($this->header(), [
+            $this->row(['sku' => 'SKU-SUBCAT-2', 'category' => 'Soins du visage', 'subcategory' => 'Sérums']),
+        ]);
+
+        $mapping = $this->service->analyze($path)['mapping'];
+        $report = $this->service->import($path, $mapping, $this->store, $this->defaultPolicies());
+
+        $this->assertSame(1, $report->categoriesCreated);
+
+        $child = ProductCategory::where('name', 'Sérums')->firstOrFail();
+        $this->assertSame($this->category->id, $child->parent_id);
+
+        $product = Product::where('sku', 'SKU-SUBCAT-2')->firstOrFail();
+        $this->assertSame($child->id, $product->category_id);
+    }
+
+    // 8d. Re-importing the same category/subcategory pair does not duplicate the subcategory.
+    public function test_reimporting_the_same_subcategory_is_idempotent(): void
+    {
+        $path = $this->writeCsv($this->header(), [
+            $this->row(['sku' => 'SKU-SUBCAT-3', 'category' => 'Soins du corps', 'subcategory' => 'Laits & crèmes corps']),
+        ]);
+
+        $mapping = $this->service->analyze($path)['mapping'];
+        $this->service->import($path, $mapping, $this->store, $this->defaultPolicies());
+        $this->service->import($path, $mapping, $this->store, $this->defaultPolicies());
+
+        $this->assertSame(1, ProductCategory::where('name', 'Laits & crèmes corps')->count());
+    }
+
+    // 8e. Non-regression: no subcategory column value => behaviour identical to before this feature.
+    public function test_missing_subcategory_falls_back_to_the_root_category_unchanged(): void
+    {
+        $path = $this->writeCsv($this->header(), [
+            $this->row(['sku' => 'SKU-SUBCAT-4', 'category' => 'Soins du visage', 'subcategory' => '']),
+        ]);
+
+        $mapping = $this->service->analyze($path)['mapping'];
+        $report = $this->service->import($path, $mapping, $this->store, $this->defaultPolicies());
+
+        $this->assertSame(0, $report->categoriesCreated);
+        $product = Product::where('sku', 'SKU-SUBCAT-4')->firstOrFail();
+        $this->assertSame($this->category->id, $product->category_id);
+    }
+
+    // 8f. analyze() maps the "Sous-catégorie" header instead of leaving it unmapped.
+    public function test_analyze_maps_the_subcategory_column(): void
+    {
+        $path = $this->writeCsv($this->header(), [$this->row()]);
+
+        $analysis = $this->service->analyze($path);
+
+        $this->assertNotNull($analysis['mapping']['subcategory']);
+        $this->assertNotContains($analysis['mapping']['subcategory'], $analysis['unmapped_header_indexes']);
     }
 
     // 9. Automatic brand creation + count.

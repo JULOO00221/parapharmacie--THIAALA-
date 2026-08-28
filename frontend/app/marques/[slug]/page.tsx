@@ -26,7 +26,7 @@ export async function generateMetadata({ params }: PageProps<'/marques/[slug]'>)
 
   return {
     title: brand.name,
-    description: brand.description ?? `Produits de la marque ${brand.name} chez Tambacounda Cosmetix.`,
+    description: brand.description ?? `Produits de la marque ${brand.name} chez Parapharmacie THIAALA.`,
     alternates: { canonical: `/marques/${brand.slug}` },
     openGraph: {
       title: brand.name,

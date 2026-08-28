@@ -29,13 +29,13 @@ const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
   title: {
-    default: "Tambacounda Cosmetix — Parapharmacie & cosmétiques",
-    template: "%s — Tambacounda Cosmetix",
+    default: "Parapharmacie THIAALA — Santé • Beauté • Bien-être",
+    template: "%s — Parapharmacie THIAALA",
   },
   description:
-    "Parapharmacie et cosmétiques au Sénégal : soins du visage, du corps, cheveux et hygiène, sélectionnés avec soin.",
+    "Parapharmacie THIAALA — Santé, beauté et bien-être au Sénégal : soins du visage, du corps, cheveux et hygiène, sélectionnés avec soin.",
   openGraph: {
-    siteName: "Tambacounda Cosmetix",
+    siteName: "Parapharmacie THIAALA",
     locale: "fr_SN",
     type: "website",
   },

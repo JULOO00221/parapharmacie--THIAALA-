@@ -1,0 +1,28 @@
+nom_produit,marque_actuellement_proposee,code_barres,prix_public,stock,raison_ambiguite,proposition_marque,niveau_confiance
+BIO BALANCE SS VIT C PURE ACID ASCORBIQ 30ML,(vide),000032412,10800.00,1.00,"préfixe « Bio Balance » répété sur 11 produits de la liste des 27, mais absent des 93 marques retenues (l'heuristique n'a gardé que le 1er mot « BIO », jugé trop générique)",Bio Balance,Moyenne
+LAIT BODY FASHION ANTI-VERGETURES 500ML,(vide),000030287,5000.00,2.00,"préfixe « Body Fashion » partagé avec le produit #030294 (gel douche), nom de marque plausible non reconnu par l'heuristique",Body Fashion,Moyenne
+PACK CHATEAU ROUGE SAVON + SOIN CONCENTREE -25%,(vide),000032656,17650.00,1.00,"nom commence par « PACK » et non par « Château Rouge » — l'heuristique base sa détection sur le 1er mot, donc a raté ce pack promo de la marque déjà validée ailleurs (3 produits)",Château Rouge,Élevée
+GEL DE DOUCHE BODY FASHION 850ML,(vide),000030294,3500.00,3.00,"préfixe « Body Fashion » partagé avec le produit #030287 (lait anti-vergetures), nom de marque plausible non reconnu par l'heuristique",Body Fashion,Moyenne
+BIO BALANCE SERUM ACID SALICYLIC 30ML,(vide),000032666,9600.00,2.00,préfixe « Bio Balance » (voir #032412),Bio Balance,Moyenne
+BIO BALANCE SERUM LUMISKIN 30ML,(vide),000032667,11434.00,1.00,préfixe « Bio Balance » (voir #032412),Bio Balance,Moyenne
+BIO OIL HLE DE SOIN F/60ML,(vide),000023814,8016.00,1.00,« Bio Oil » est une marque internationale connue (huile de soin cicatrices/vergetures) ; 3 formats (25/60/125ML) dans la liste — non reconnue par l'heuristique car « BIO » jugé trop générique,Bio Oil,Élevée
+BIO OIL HLE DE SOIN F/125ML,(vide),000023811,12175.00,1.00,« Bio Oil » (voir #023814),Bio Oil,Élevée
+BIO OIL HLE DE SOIN F/25ML,(vide),000023813,3450.00,1.00,« Bio Oil » (voir #023814),Bio Oil,Élevée
+BIO BALANCE CR SUP HD ADV NIGH CERAMID NP0.2%-50ML,(vide),000032829,13400.00,1.00,préfixe « Bio Balance » (voir #032412),Bio Balance,Moyenne
+BIO BALANCE CR SUP PLUMP HYDRA UR 50ML,(vide),000032830,13540.00,1.00,préfixe « Bio Balance » (voir #032412),Bio Balance,Moyenne
+BIO BALANCE FLU SOLAIRE ANTI-TACHES SPF 50+40ML,(vide),000032953,12631.00,1.00,préfixe « Bio Balance » (voir #032412),Bio Balance,Moyenne
+BIO BALANCE FLUSOLAIRE HYDRAS PF 50+40ML,(vide),000032954,12631.00,1.00,préfixe « Bio Balance » (voir #032412),Bio Balance,Moyenne
+BIO BALANCE HC CICA VISAGE LAIT 250ML,(vide),000032955,10017.00,1.00,préfixe « Bio Balance » (voir #032412),Bio Balance,Moyenne
+BIO BALANCE CR SUP GLOW 3-0 ETHYLASC 5%+ACIDF1%,(vide),000032443,13700.00,1.00,préfixe « Bio Balance » (voir #032412),Bio Balance,Moyenne
+BIO BALANCE CR YEUX SUP HD AUCOLAGEN& VIT C20ML,(vide),000032442,12600.00,1.00,préfixe « Bio Balance » (voir #032412),Bio Balance,Moyenne
+BIO BALANCE SS ACID HYALURONIQ MULTI MOLECUL 30ML,(vide),000032444,10700.00,1.00,préfixe « Bio Balance » (voir #032412),Bio Balance,Moyenne
+FLEUR DE BAIN GM,(vide),000027782,1250.00,2.00,« Fleur de Bain » ressemble à un nom de produit générique (accessoire de bain) plutôt qu'à une marque commerciale ; aucun autre produit de la liste ne partage ce préfixe,Sans marque (accessoire générique),Faible
+HUILE BAOBAB BASSARI F50ML,(vide),000021355,4150.00,23.00,"« Bassari » pourrait être un nom de marque locale (référence à l'ethnie/région Bassari, Sénégal) ou une simple mention d'origine du produit ; occurrence unique",Bassari,Faible
+LAIT VALDA HUILE DE BAOBAB F/250ML,(vide),000022767,1960.00,1.00,"« Valda » apparaît au 2e mot du nom (« LAIT VALDA HUILE... ») au lieu du 1er — l'heuristique base sa détection sur le 1er mot et a donc raté ce produit, alors que « Valda » est déjà une marque validée ailleurs (1 produit : VALDA LAIT ADOUC BEURRE DE KARITE)",Valda,Élevée
+RELAX PATCH DOULEUR MENSTRUEL BT3,(vide),000033190,3460.00,2.00,"« Relax » pourrait être un nom de marque ou un simple descriptif du produit (« patch relaxant ») ; occurrence unique, aucun autre indice",Relax (à vérifier),Faible
+PETIT OL CHVX SECS OLIV/KAR/ARG SH250ML,(vide),000032775,4800.00,1.00,"« PETIT OL » est probablement une abréviation de « Petit Olivier », marque capillaire/corps connue (gamme huile olive/karité/argan cohérente avec ce produit) ; l'heuristique n'a pas reconnu l'abréviation",Petit Olivier,Moyenne
+PARA SPRAY ENVIRONN POUX 250ML,(vide),000031773,8932.00,1.00,"« PARA » est un préfixe générique (« anti-parasitaire ») plutôt qu'une marque ; le même rayon/usage anti-poux existe déjà sous la marque Parasidose (Gilbert Parasidose peigne, Parasidose soin traitant) — lien possible mais non certain",Parasidose (à vérifier),Faible
+SAVON DE MARSEILLE AMANDE DOUCE 4 X 200GRS,(vide),000031357,2950.00,2.00,"« Savon de Marseille » est une appellation générique de type de savon (procédé de fabrication), pas une marque déposée unique — plusieurs fabricants utilisent ce nom",Sans marque (savon de Marseille générique),Faible
+SAVON DE MARSEILLE GLYCERINE 4 X 200 GRS,(vide),000031358,2950.00,2.00,« Savon de Marseille » — même remarque que #031357 (appellation générique),Sans marque (savon de Marseille générique),Faible
+SAVON PETIT MARSEILLE OLIVE 4X100G,(vide),000031360,2950.00,3.00,« Savon Petit Marseille » — variante du même type de savon générique,Sans marque (savon de Marseille générique),Faible
+PARFUM BABY COLOGNE,(vide),000031162,1650.00,1.00,"« PARFUM BABY COLOGNE » est un nom descriptif de produit plutôt qu'une marque ; la marque Babymed propose déjà une eau de Cologne (BABYMED EAU DE COLOGNE 500ML) dans le catalogue, lien plausible mais non explicite dans ce nom",Babymed (à vérifier),Faible

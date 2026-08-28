@@ -44,11 +44,16 @@ export function CheckoutView({
   stores,
   deliveryZones,
   isAuthenticated = false,
+  prefillName = '',
+  prefillPhone = '',
 }: {
   stores: Store[];
   deliveryZones: DeliveryZone[];
   /** Chosen server-side from the session cookie — never the token itself, which CheckoutView never sees. */
   isAuthenticated?: boolean;
+  /** Server-derived initial values only (account name / last real order's phone) — purely a form default, never re-validated as proof of identity; both fields stay fully editable. */
+  prefillName?: string;
+  prefillPhone?: string;
 }) {
   const { items, subtotal, clearCart } = useCart();
   const router = useRouter();
@@ -63,8 +68,8 @@ export function CheckoutView({
   const [deliveryAddress, setDeliveryAddress] = useState('');
   const selectedZone = deliveryZones.find((zone) => zone.id === selectedZoneId) ?? null;
 
-  const [customerName, setCustomerName] = useState('');
-  const [customerPhone, setCustomerPhone] = useState('');
+  const [customerName, setCustomerName] = useState(prefillName);
+  const [customerPhone, setCustomerPhone] = useState(prefillPhone);
   const [customerEmail, setCustomerEmail] = useState('');
 
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<SelectedPaymentMethod>('cash');

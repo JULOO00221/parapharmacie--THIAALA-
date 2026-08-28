@@ -100,6 +100,10 @@ class ProductCsvImportService
                 $allCategoryNames[] = $fields['category'];
             }
 
+            if ($fields['subcategory'] !== null) {
+                $allCategoryNames[] = $fields['subcategory'];
+            }
+
             if ($fields['brand'] !== null) {
                 $allBrandNames[] = $fields['brand'];
             }
@@ -297,6 +301,32 @@ class ProductCsvImportService
             $warnings[] = sprintf('Catégorie "%s" inconnue, conservée telle quelle (politique : ignorer).', $fields['category']);
         }
 
+        // Sous-catégorie optionnelle : résolue/créée comme un enfant de la catégorie
+        // ci-dessus (parent_id) ; si elle existe, le produit est rattaché à ELLE
+        // (la feuille la plus précise), pas à la catégorie racine. Ignorée si le
+        // champ est absent du CSV, ou si la catégorie racine elle-même n'a pas pu
+        // être résolue (rien à quoi la rattacher).
+        $subCategoryCreated = false;
+
+        if ($fields['subcategory'] !== null && $categoryWillExist) {
+            [$subCategoryId, $subCategoryWillExist, $subCategoryCreated] = $this->resolveReference(
+                $fields['subcategory'],
+                $categoriesBySlug,
+                $policies['category'] ?? 'create',
+                $dryRun,
+                'categoriesCreated',
+                $stats,
+                ProductCategory::class,
+                ['is_active' => true, 'parent_id' => $categoryId],
+            );
+
+            if ($subCategoryWillExist) {
+                $categoryId = $subCategoryId;
+            } else {
+                $warnings[] = sprintf('Sous-catégorie "%s" inconnue, catégorie parente conservée (politique : ignorer).', $fields['subcategory']);
+            }
+        }
+
         [$brandId, $brandWillExist, $brandCreated] = $this->resolveReference(
             $fields['brand'],
             $brandsBySlug,
@@ -460,6 +490,8 @@ class ProductCsvImportService
             unchangedFields: $unchangedFields,
             categoryName: $fields['category'],
             categoryWillBeCreated: $categoryCreated,
+            subCategoryName: $fields['subcategory'],
+            subCategoryWillBeCreated: $subCategoryCreated,
             brandName: $fields['brand'],
             brandWillBeCreated: $brandCreated,
             tagsToCreate: $tagsToCreate,

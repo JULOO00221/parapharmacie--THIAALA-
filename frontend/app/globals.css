@@ -1,21 +1,27 @@
 @import "tailwindcss";
 
 /*
- * Tambacounda Cosmetix storefront identity.
- * No visual identity existed anywhere in the repo before this file — the
- * Filament back-office's amber is an admin-tool choice, not a customer-facing
- * brand, so this is a deliberate, separate palette:
- *   - brand (deep forest green): trust, health, pharmacy — the primary color.
- *   - accent (warm terracotta/clay): Sahel warmth, used sparingly for CTAs
- *     and highlights so it stays premium rather than loud.
+ * Parapharmacie THIAALA storefront identity.
+ * Vert + doré + blanc, inspired by the THIAALA logo. Kept as a deliberate,
+ * three-tier hierarchy rather than a flat brand-color swap:
+ *   - brand (deep forest green): identity and primary action — unchanged
+ *     from the pre-rebrand palette, since it already reads as "vert" and
+ *     is deployed across the entire storefront (buttons, links, header/
+ *     footer, checkout). The Filament back-office's amber stays a
+ *     separate, admin-tool-only choice, untouched by this palette.
+ *   - accent (doré/gold, was terracotta/clay pre-rebrand): the brand's
+ *     secondary accent — CTAs, "mis en avant", highlights. Reserved for
+ *     backgrounds/icons/badges, never body text on a light surface: gold
+ *     on white only reaches ~3.25:1 contrast, below the 4.5:1 WCAG AA
+ *     text threshold (though above the 3:1 large-text/UI-component one).
  *   - promo (deep bissap/hibiscus red): reserved ONLY for real discounts
- *     (compare_at_price present), so it never collides with accent
- *     ("mis en avant") or with danger (errors/alerts). Deliberately a
- *     magenta-leaning wine red, not the orange-leaning danger red and not
- *     a bubblegum pink — #9c1f4e on white is a 7.7:1 contrast ratio (WCAG
- *     AAA for normal text), and #9c1f4e on --color-promo-100 is 5.7:1
- *     (WCAG AA). Named after bissap (hibiscus tea), a Senegalese staple —
- *     not copied from any reference site's palette.
+ *     (compare_at_price present) — deliberately kept independent of the
+ *     brand palette so a promotion never reads as "just another gold
+ *     highlight" and never collides with accent ("mis en avant") or with
+ *     danger (errors/alerts). #9c1f4e on white is a 7.7:1 contrast ratio
+ *     (WCAG AAA for normal text), and #9c1f4e on --color-promo-100 is
+ *     5.7:1 (WCAG AA). Named after bissap (hibiscus tea), a Senegalese
+ *     staple — not copied from any reference site's palette.
  *   - warm off-white surfaces instead of clinical pure white.
  */
 :root {
@@ -27,10 +33,10 @@
   --color-brand-700: #173a2b;
   --color-brand-900: #0d211a;
 
-  --color-accent-100: #f7e2d3;
-  --color-accent-400: #dd8f5c;
-  --color-accent-600: #c6633c;
-  --color-accent-700: #a34f2e;
+  --color-accent-100: #e8d2a0;
+  --color-accent-400: #d1ae55;
+  --color-accent-600: #b8860b;
+  --color-accent-700: #8c6a08;
 
   --color-promo-50: #fbeaf1;
   --color-promo-100: #f5d6e3;

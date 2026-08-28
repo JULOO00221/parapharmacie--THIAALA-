@@ -33,7 +33,11 @@ export async function AccountNav({ variant }: { variant: 'desktop' | 'mobile' })
   return (
     <div className={variant === 'desktop' ? 'flex items-center gap-6' : 'flex flex-col gap-1'}>
       {variant === 'mobile' && <p className="px-3 py-1 text-sm text-ink-muted">Bonjour {user.name}</p>}
-      {variant === 'desktop' && <span className="text-sm text-ink-muted">Bonjour {user.name}</span>}
+      {variant === 'desktop' && (
+        <span className="max-w-[10rem] truncate whitespace-nowrap text-sm text-ink-muted" title={`Bonjour ${user.name}`}>
+          Bonjour {user.name}
+        </span>
+      )}
       <Link href="/compte" className={linkClass}>
         Compte
       </Link>

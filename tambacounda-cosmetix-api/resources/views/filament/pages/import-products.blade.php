@@ -126,6 +126,9 @@
                                     @if ($row['category_will_be_created'])
                                         <div class="text-xs text-gray-500">Catégorie "{{ $row['category_name'] }}" à créer</div>
                                     @endif
+                                    @if ($row['sub_category_will_be_created'])
+                                        <div class="text-xs text-gray-500">Sous-catégorie "{{ $row['sub_category_name'] }}" à créer</div>
+                                    @endif
                                     @if ($row['brand_will_be_created'])
                                         <div class="text-xs text-gray-500">Marque "{{ $row['brand_name'] }}" à créer</div>
                                     @endif

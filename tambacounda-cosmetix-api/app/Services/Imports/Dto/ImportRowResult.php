@@ -33,6 +33,8 @@ class ImportRowResult
         public readonly array $unchangedFields = [],
         public readonly ?string $categoryName = null,
         public readonly bool $categoryWillBeCreated = false,
+        public readonly ?string $subCategoryName = null,
+        public readonly bool $subCategoryWillBeCreated = false,
         public readonly ?string $brandName = null,
         public readonly bool $brandWillBeCreated = false,
         public readonly array $tagsToCreate = [],

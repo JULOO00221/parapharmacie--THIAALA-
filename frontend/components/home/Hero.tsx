@@ -35,12 +35,12 @@ export function Hero({ showNouveautesCta = false }: { showNouveautesCta?: boolea
     <section className="border-b border-border bg-brand-600">
       <div className="mx-auto grid max-w-6xl items-center gap-10 px-4 py-16 sm:px-6 sm:py-20 lg:grid-cols-2 lg:py-24">
         <div>
-          <p className="text-sm font-medium uppercase tracking-wide text-brand-100">Parapharmacie & cosmétiques</p>
+          <p className="text-sm font-medium uppercase tracking-wide text-brand-100">Santé • Beauté • Bien-être</p>
           <h1 className="mt-3 max-w-xl font-display text-4xl font-semibold text-white sm:text-5xl">
             Des soins sélectionnés avec soin, pour tout le Sénégal.
           </h1>
           <p className="mt-4 max-w-lg text-brand-50">
-            Visage, corps, cheveux et hygiène — découvrez le catalogue Tambacounda Cosmetix.
+            Visage, corps, cheveux et hygiène — découvrez le catalogue Parapharmacie THIAALA.
           </p>
 
           <div className="mt-8 flex flex-wrap items-center gap-3">

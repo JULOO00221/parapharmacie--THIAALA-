@@ -25,7 +25,7 @@ export async function generateMetadata({ params }: PageProps<'/categories/[slug]
 
   return {
     title: category.name,
-    description: category.description ?? `Découvrez nos produits ${category.name.toLowerCase()} chez Tambacounda Cosmetix.`,
+    description: category.description ?? `Découvrez nos produits ${category.name.toLowerCase()} chez Parapharmacie THIAALA.`,
     alternates: { canonical: `/categories/${category.slug}` },
     openGraph: {
       title: category.name,

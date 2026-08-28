@@ -1,3 +1,4 @@
+import Image from 'next/image';
 import Link from 'next/link';
 import { Suspense } from 'react';
 import type { ReactNode } from 'react';
@@ -50,8 +51,21 @@ export async function Header() {
   return (
     <header className="relative border-b border-border bg-surface-raised">
       <div className="mx-auto flex max-w-6xl items-center gap-6 px-4 py-4 sm:px-6">
-        <Link href="/" className="shrink-0 text-lg font-semibold tracking-tight text-brand-700">
-          Tambacounda <span className="text-accent-600">Cosmetix</span>
+        {/*
+          Official THIAALA lockup (icon + wordmark + slogan), trimmed from
+          the source file's mostly-empty 1200x1200 canvas down to its real
+          889x244 content — see public/logo-thiaala.png. Sized by height so
+          it stays crisp at 2x; width follows the source aspect ratio.
+        */}
+        <Link href="/" className="relative block h-10 w-[145px] shrink-0 sm:h-12 sm:w-[174px]">
+          <Image
+            src="/logo-thiaala.png"
+            alt="Parapharmacie THIAALA — Santé • Beauté • Bien-être"
+            fill
+            sizes="(min-width: 640px) 174px, 145px"
+            className="object-contain object-left"
+            priority
+          />
         </Link>
 
         {/*
@@ -81,7 +95,15 @@ export async function Header() {
           <SearchBar className="ml-auto hidden max-w-sm flex-1 xl:block" />
         </Suspense>
 
-        <div className="hidden xl:block">
+        {/*
+          shrink-0: without it, this block was the one flex child that lost
+          the width fight at the tight end of the xl range (~1280–1350px) —
+          "Bonjour {name}" wrapped to two lines while every sibling stayed
+          on one. SearchBar already declares itself the flexible element
+          (flex-1 above), so it's the one that should absorb any squeeze,
+          not this block's text.
+        */}
+        <div className="hidden shrink-0 xl:block">
           <Suspense fallback={<AccountNavFallback />}>
             <AccountNav variant="desktop" />
           </Suspense>
