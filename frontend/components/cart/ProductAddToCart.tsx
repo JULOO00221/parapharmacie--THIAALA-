@@ -2,9 +2,12 @@
 
 import { useEffect, useReducer, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { Button } from '@/components/ui/Button';
+import { CTA } from '@/components/ui/cta';
+import { MinusIcon, PlusIcon, WhatsAppIcon } from '@/components/ui/icons';
 import { MAX_CART_ITEM_QUANTITY } from '@/lib/cart/reducer';
 import type { Product } from '@/lib/api/types';
+import { WHATSAPP_LINK_PROPS, whatsappHref } from '@/lib/config/contact';
+import { cn } from '@/lib/utils/cn';
 import { formatPrice } from '@/lib/utils/format';
 import { useCart } from './CartProvider';
 
@@ -84,63 +87,85 @@ export function ProductAddToCart({ product }: { product: Product }) {
     setStickyBarPortalTarget(document.getElementById('product-page-sticky-container'));
   }, []);
 
+  // Commander sur WhatsApp : au même niveau que le panier (DESIGN.md §4.2).
+  // Le message reprend le produit, sa référence et la quantité choisie ;
+  // pour un produit indisponible, il demande quand il reviendra.
+  const whatsappMessage = product.available
+    ? `Bonjour, je souhaite commander : ${product.name} (réf. ${product.sku}), quantité ${quantity}.`
+    : `Bonjour, le produit ${product.name} (réf. ${product.sku}) est indiqué indisponible. Quand sera-t-il de retour ?`;
+  const whatsappButton = (
+    <a href={whatsappHref(whatsappMessage)} {...WHATSAPP_LINK_PROPS} className={cn(CTA.secondary, 'w-full')}>
+      <WhatsAppIcon className="h-[18px] w-[18px]" />
+      {product.available ? 'Commander sur WhatsApp' : 'Demander sur WhatsApp'}
+    </a>
+  );
+
   if (!product.available) {
     return (
-      <div className="mt-6">
-        <Button variant="outline" size="lg" disabled className="w-full sm:w-auto">
+      <div className="flex flex-col gap-3">
+        <button type="button" disabled className={cn(CTA.primary, 'w-full cursor-not-allowed opacity-50')}>
           Indisponible
-        </Button>
-        <p className="mt-2 text-xs text-ink-muted">
-          Ce produit n&apos;est pas disponible actuellement.
-        </p>
+        </button>
+        {whatsappButton}
       </div>
     );
   }
 
+  const stepperButton =
+    'flex h-11 w-11 items-center justify-center rounded-full text-vert transition-colors hover:bg-ivoire disabled:opacity-35 disabled:hover:bg-transparent';
+
   return (
     <>
-      <div ref={ctaRef} className="mt-6 flex flex-wrap items-center gap-3">
-        <div className="flex items-center gap-1 rounded-full border border-border">
-          <button
-            type="button"
-            onClick={() => setQuantity((q) => Math.max(1, q - 1))}
-            disabled={quantity <= 1}
-            aria-label="Diminuer la quantité"
-            className="flex h-10 w-10 items-center justify-center text-ink hover:bg-brand-50 disabled:opacity-40"
-          >
-            −
-          </button>
-          <span className="w-8 text-center font-medium text-ink" aria-live="polite">
-            {quantity}
-          </span>
-          <button
-            type="button"
-            onClick={() => setQuantity((q) => Math.min(MAX_CART_ITEM_QUANTITY, q + 1))}
-            disabled={quantity >= MAX_CART_ITEM_QUANTITY}
-            aria-label="Augmenter la quantité"
-            className="flex h-10 w-10 items-center justify-center text-ink hover:bg-brand-50 disabled:opacity-40"
-          >
-            +
+      <div className="flex flex-col gap-3 lg:gap-3.5">
+        <div ref={ctaRef} className="flex items-center gap-3 lg:gap-3.5">
+          <div className="flex h-[52px] shrink-0 items-center rounded-full border border-bordure-forte bg-blanc px-1 sm:h-14 sm:px-1.5">
+            <button
+              type="button"
+              onClick={() => setQuantity((q) => Math.max(1, q - 1))}
+              disabled={quantity <= 1}
+              aria-label="Diminuer la quantité"
+              className={stepperButton}
+            >
+              <MinusIcon className="h-4 w-4" />
+            </button>
+            <span className="w-[30px] text-center text-base font-semibold text-encre sm:w-[38px] sm:text-[17px]" aria-live="polite">
+              <span className="sr-only">Quantité : </span>
+              {quantity}
+            </span>
+            <button
+              type="button"
+              onClick={() => setQuantity((q) => Math.min(MAX_CART_ITEM_QUANTITY, q + 1))}
+              disabled={quantity >= MAX_CART_ITEM_QUANTITY}
+              aria-label="Augmenter la quantité"
+              className={stepperButton}
+            >
+              <PlusIcon className="h-4 w-4" />
+            </button>
+          </div>
+
+          <button type="button" onClick={handleAdd} className={cn(CTA.primary, 'min-w-0 flex-1 px-4')}>
+            Ajouter au panier
           </button>
         </div>
 
-        <Button size="lg" onClick={handleAdd} className="flex-1 sm:flex-none">
-          Ajouter au panier
-        </Button>
+        {whatsappButton}
       </div>
 
       {showStickyBar &&
         stickyBarPortalTarget &&
         createPortal(
-          <div className="sticky bottom-0 z-30 border-t border-border bg-surface-raised p-3 shadow-lg lg:hidden">
-            <div className="mx-auto flex max-w-lg items-center justify-between gap-3 px-4 sm:px-6">
-              <div className="min-w-0">
-                <p className="truncate text-xs text-ink-muted">{product.name}</p>
-                <p className="text-base font-semibold text-ink">{formatPrice(product.price)}</p>
+          // Barre d'achat collée en bas, mobile uniquement (DESIGN.md §3).
+          <div className="sticky bottom-0 z-30 border-t border-bordure bg-blanc lg:hidden">
+            <div className="mx-auto flex min-h-[78px] max-w-lg items-center gap-3 px-4 py-3">
+              <div className="flex shrink-0 flex-col gap-0.5">
+                <span className="text-[11.5px] text-texte-discret">{quantity > 1 ? `Total · ${quantity} articles` : 'Total'}</span>
+                <span className="font-titre text-xl text-vert">
+                  {formatPrice(Number.parseFloat(product.price) * quantity)}
+                </span>
               </div>
-              <Button onClick={handleAdd} className="shrink-0">
+              <button type="button" onClick={handleAdd} className={cn(CTA.primary, 'min-w-0 flex-1 px-4')}>
                 Ajouter au panier
-              </Button>
+              </button>
             </div>
           </div>,
           stickyBarPortalTarget

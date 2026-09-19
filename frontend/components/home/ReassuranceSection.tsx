@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
 import type { DeliveryZone } from '@/lib/api/types';
+import { cheapestDeliveryZone } from '@/lib/utils/delivery';
 import { formatPrice } from '@/lib/utils/format';
 
 const iconProps = {
@@ -13,14 +14,6 @@ const iconProps = {
   className: 'h-[21px] w-[21px] shrink-0 text-vert lg:h-6 lg:w-6',
 } as const;
 
-/** Tarif de livraison le plus bas, issu des zones réelles de l'API. */
-function cheapestZone(zones: DeliveryZone[]): DeliveryZone | null {
-  return zones.reduce<DeliveryZone | null>(
-    (best, zone) => (best === null || Number.parseFloat(zone.fee) < Number.parseFloat(best.fee) ? zone : best),
-    null,
-  );
-}
-
 /**
  * Bandeau de confiance en 4 points (DESIGN.md §3). Uniquement des faits
  * confirmés : la parapharmacie dépend d'une officine agréée à Tambacounda ;
@@ -30,7 +23,7 @@ function cheapestZone(zones: DeliveryZone[]): DeliveryZone | null {
  * Sur mobile, seuls les titres courts s'affichent.
  */
 export function ReassuranceSection({ zones }: { zones: DeliveryZone[] }) {
-  const cheapest = cheapestZone(zones);
+  const cheapest = cheapestDeliveryZone(zones);
 
   const items: Array<{ title: string; short: string; detail: string; icon: ReactNode }> = [
     {

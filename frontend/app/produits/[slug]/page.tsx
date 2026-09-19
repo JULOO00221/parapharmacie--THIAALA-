@@ -1,17 +1,24 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
-import { cache } from 'react';
+import { cache, type ReactNode } from 'react';
 import { ProductAddToCart } from '@/components/cart/ProductAddToCart';
+import { Breadcrumb, type BreadcrumbItem } from '@/components/catalog/Breadcrumb';
 import { ProductSection } from '@/components/catalog/ProductSection';
-import { Badge } from '@/components/ui/Badge';
+import { PharmacistAdvice } from '@/components/layout/PharmacistAdvice';
 import { PriceTag } from '@/components/product/PriceTag';
 import { ProductGallery } from '@/components/product/ProductGallery';
 import { ProductReassurance } from '@/components/product/ProductReassurance';
+import { ProductTabs, type ProductTab } from '@/components/product/ProductTabs';
 import { StockBadge } from '@/components/product/StockBadge';
+import { getCategories } from '@/lib/api/categories';
+import { withFallback } from '@/lib/api/client';
+import { getDeliveryZones } from '@/lib/api/delivery-zones';
 import { getProduct, getProducts } from '@/lib/api/products';
+import type { Category, DeliveryZone, Product } from '@/lib/api/types';
+import { cheapestDeliveryZone } from '@/lib/utils/delivery';
 import { discountPercent } from '@/lib/utils/pricing';
-import { visibleShortDescription } from '@/lib/utils/product';
+import { isRealBrand, visibleShortDescription } from '@/lib/utils/product';
 
 export const dynamic = 'force-dynamic';
 
@@ -36,35 +43,113 @@ export async function generateMetadata({ params }: PageProps<'/produits/[slug]'>
 
   return {
     title: product.name,
-    description: product.short_description ?? product.description ?? `${product.name} — Parapharmacie THIAALA`,
+    description:
+      visibleShortDescription(product) ??
+      `${product.name} à la Parapharmacie THIAALA, livré à Tambacounda et dans la région. Paiement à la livraison ou par Wave.`,
     alternates: { canonical: `/produits/${product.slug}` },
     openGraph: {
       title: product.name,
-      description: product.short_description ?? undefined,
+      description: visibleShortDescription(product) ?? undefined,
       images: product.primary_image ? [product.primary_image.url] : undefined,
       type: 'website',
     },
   };
 }
 
+/** Accueil / [rayon parent] / catégorie / produit — le parent vient de la liste des catégories (en cache). */
+function breadcrumbFor(product: Product, categories: Category[]): BreadcrumbItem[] {
+  const parent = categories.find((category) => category.slug === product.category.slug)?.parent;
+
+  return [
+    { label: 'Accueil', href: '/' },
+    ...(parent ? [{ label: parent.name, href: `/categories/${parent.slug}` }] : []),
+    { label: product.category.name, href: `/categories/${product.category.slug}` },
+    { label: product.name },
+  ];
+}
+
+function Characteristics({ product, categories }: { product: Product; categories: Category[] }) {
+  const parent = categories.find((category) => category.slug === product.category.slug)?.parent;
+  const rows: Array<{ label: string; value: ReactNode }> = [
+    { label: 'Référence', value: product.sku },
+    ...(product.brand && isRealBrand(product.brand)
+      ? [
+          {
+            label: 'Marque',
+            value: (
+              <Link href={`/marques/${product.brand.slug}`} className="font-semibold text-vert hover:underline">
+                {product.brand.name}
+              </Link>
+            ),
+          },
+        ]
+      : []),
+    {
+      label: 'Catégorie',
+      value: (
+        <Link href={`/categories/${product.category.slug}`} className="font-semibold text-vert hover:underline">
+          {parent ? `${parent.name} › ${product.category.name}` : product.category.name}
+        </Link>
+      ),
+    },
+    ...(product.tags.length > 0 ? [{ label: 'Tags', value: product.tags.map((tag) => tag.name).join(', ') }] : []),
+  ];
+
+  return (
+    <dl className="grid grid-cols-[auto_1fr] gap-x-6 gap-y-3 text-[14.5px] lg:text-[15.5px]">
+      {rows.map((row) => (
+        <div key={row.label} className="contents">
+          <dt className="text-texte-discret">{row.label}</dt>
+          <dd className="text-encre">{row.value}</dd>
+        </div>
+      ))}
+    </dl>
+  );
+}
+
 export default async function ProductPage({ params }: PageProps<'/produits/[slug]'>) {
   const { slug } = await params;
   const product = await loadProduct(slug);
 
-  // Same real capability the category pages already use — no new endpoint.
-  // Excludes the current product itself, capped to a small, curated set.
-  const related = (await getProducts({ category: product.category.slug, per_page: 5 })).data
-    .filter((candidate) => candidate.id !== product.id)
-    .slice(0, 4);
+  const [relatedPage, categories, zones] = await Promise.all([
+    // Même rayon (sous-catégories comprises), hors produit courant.
+    getProducts({ category: product.category.slug, per_page: 5 }),
+    // Liste en cache, partagée avec l'en-tête : sert au fil d'Ariane.
+    getCategories(),
+    // Lève en cas d'erreur (le paiement la gère) ; ici, l'encadré se replie
+    // simplement sur « frais selon la zone ».
+    withFallback<DeliveryZone[]>('GET /delivery-zones', [], () => getDeliveryZones()),
+  ]);
+  const related = relatedPage.data.filter((candidate) => candidate.id !== product.id).slice(0, 4);
 
   const percentOff = discountPercent(product.price, product.compare_at_price);
   const shortDescription = visibleShortDescription(product);
+  const cheapestZone = cheapestDeliveryZone(zones);
+
+  // Onglets : uniquement ceux qui ont du contenu. Composition et Conseils
+  // d'utilisation apparaîtront quand l'API les fournira (DESIGN.md §5).
+  const tabs: ProductTab[] = [
+    ...(product.description
+      ? [
+          {
+            id: 'description',
+            label: 'Description',
+            content: (
+              <p className="whitespace-pre-line text-[14.5px] leading-[1.7] text-texte-doux lg:text-[15.5px] lg:leading-[1.75]">
+                {product.description}
+              </p>
+            ),
+          },
+        ]
+      : []),
+    { id: 'caracteristiques', label: 'Caractéristiques', content: <Characteristics product={product} categories={categories} /> },
+  ];
 
   const jsonLd = {
     '@context': 'https://schema.org',
     '@type': 'Product',
     name: product.name,
-    description: product.short_description ?? product.description ?? undefined,
+    description: shortDescription ?? product.description ?? undefined,
     sku: product.sku,
     image: product.images.map((image) => image.url),
     brand: product.brand ? { '@type': 'Brand', name: product.brand.name } : undefined,
@@ -77,95 +162,77 @@ export default async function ProductPage({ params }: PageProps<'/produits/[slug
     },
   };
 
-  // id targeted by ProductAddToCart's mobile sticky bar via a React portal —
-  // `position: sticky` (not `fixed`) needs its containing block to span
-  // this entire page's content (title through "Produits similaires") so it
-  // releases naturally right before the real Footer instead of ever
-  // covering it. See ProductAddToCart.tsx for why `fixed` + a spacer can
-  // never actually achieve this.
+  // id ciblé par la barre d'achat mobile de ProductAddToCart (portail React) :
+  // `position: sticky` a besoin d'un conteneur couvrant toute la page, du
+  // titre aux produits similaires, pour se libérer juste avant le pied de
+  // page au lieu de le recouvrir. Voir ProductAddToCart.tsx.
   return (
     <div id="product-page-sticky-container">
-      <div className="mx-auto max-w-6xl px-4 py-10 sm:px-6">
-        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
 
-        <nav aria-label="Fil d'Ariane" className="mb-6 flex flex-wrap items-center gap-1 text-sm text-ink-muted">
-          <Link href="/" className="hover:text-brand-700">Accueil</Link>
-          <span>/</span>
-          <Link href="/produits" className="hover:text-brand-700">Produits</Link>
-          <span>/</span>
-          <Link href={`/categories/${product.category.slug}`} className="hover:text-brand-700">{product.category.name}</Link>
-        </nav>
+      <div className="mx-auto max-w-[1440px] px-4 pt-4 sm:px-8 lg:px-16 lg:pt-5">
+        <div className="pb-4 lg:pb-[14px]">
+          <Breadcrumb items={breadcrumbFor(product, categories)} />
+        </div>
 
-        <div className="grid gap-8 lg:grid-cols-2">
-          <ProductGallery
-            images={product.images}
-            productName={product.name}
-            featured={product.featured}
-            percentOff={percentOff}
-          />
+        <div className="grid gap-[22px] lg:grid-cols-[minmax(0,620px)_minmax(0,1fr)] lg:gap-14">
+          <ProductGallery images={product.images} productName={product.name} featured={product.featured} percentOff={percentOff} />
 
-          <div>
-            {product.brand && (
-              <Link href={`/marques/${product.brand.slug}`} className="text-sm font-medium uppercase tracking-wide text-brand-700 hover:underline">
+          <div className="flex flex-col gap-[13px] lg:gap-[18px]">
+            {product.brand && isRealBrand(product.brand) && (
+              <Link
+                href={`/marques/${product.brand.slug}`}
+                className="surtitre w-fit text-[10.5px] tracking-[0.18em] text-or hover:text-vert lg:text-xs"
+              >
                 {product.brand.name}
               </Link>
             )}
 
-            <h1 className="mt-1 text-2xl font-bold text-ink sm:text-3xl">{product.name}</h1>
+            <h1 className="font-titre text-[30px] leading-[1.12] text-vert lg:text-[42px]">{product.name}</h1>
 
-            {product.requires_prescription && (
-              <p className="mt-2 text-sm font-medium text-[color:var(--color-warning)]">Nécessite une ordonnance</p>
-            )}
+            <p className="text-[14.5px] leading-relaxed text-texte-doux lg:text-base">
+              {shortDescription ? <>{shortDescription} </> : null}
+              <span className="text-texte-discret">Réf. {product.sku}</span>
+            </p>
 
-            <div className="mt-4 flex flex-wrap items-center gap-3">
+            {/* Le pourcentage de remise est déjà sur le visuel (ProductBadges). */}
+            <div className="lg:pt-1">
               <PriceTag price={product.price} compareAtPrice={product.compare_at_price} size="lg" />
-              {percentOff !== null && <Badge tone="promo">−{percentOff}%</Badge>}
-              <StockBadge status={product.stock_status} />
             </div>
 
-            {shortDescription && <p className="mt-4 text-ink-muted">{shortDescription}</p>}
+            <StockBadge status={product.stock_status} />
 
-            <ProductAddToCart product={product} />
-
-            <ProductReassurance />
-
-            {product.tags.length > 0 && (
-              <div className="mt-4 flex flex-wrap gap-2">
-                {product.tags.map((tag) => (
-                  <Badge key={tag.id} tone="neutral">
-                    {tag.name}
-                  </Badge>
-                ))}
-              </div>
+            {product.requires_prescription && (
+              <p className="rounded-xl border border-bordure bg-blanc px-4 py-3 text-sm font-medium text-warning">
+                Ce produit nécessite une ordonnance.
+              </p>
             )}
 
-            {product.description && (
-              <div className="mt-8 border-t border-border pt-6">
-                <h2 className="mb-3 font-display text-lg font-semibold text-ink">Description</h2>
-                <p className="whitespace-pre-line text-sm leading-relaxed text-ink-muted">{product.description}</p>
-              </div>
-            )}
+            <div className="pt-1.5">
+              <ProductAddToCart product={product} />
+            </div>
 
-            <dl className="mt-8 grid grid-cols-2 gap-4 border-t border-border pt-6 text-sm">
-              <div>
-                <dt className="text-ink-muted">Référence</dt>
-                <dd className="font-medium text-ink">{product.sku}</dd>
-              </div>
-              <div>
-                <dt className="text-ink-muted">Catégorie</dt>
-                <dd className="font-medium text-ink">{product.category.name}</dd>
-              </div>
-            </dl>
+            <div className="pt-[9px] lg:pt-1.5">
+              <ProductReassurance cheapestDeliveryFee={cheapestZone?.fee ?? null} />
+            </div>
           </div>
+        </div>
+
+        <div className="grid gap-[26px] pt-[26px] lg:grid-cols-[minmax(0,620px)_minmax(0,1fr)] lg:items-start lg:gap-14 lg:pt-[66px]">
+          <ProductTabs tabs={tabs} />
+          <PharmacistAdvice layout="card" productName={product.name} />
         </div>
       </div>
 
       <ProductSection
         eyebrow="Dans le même rayon"
-        title="Produits similaires"
+        title="Vous aimerez aussi"
         viewAllHref={`/categories/${product.category.slug}`}
         products={related}
       />
+
+      {/* Espace sous la dernière section : la barre d'achat mobile ne recouvre jamais une carte. */}
+      <div className="h-8 lg:h-0" aria-hidden="true" />
     </div>
   );
 }

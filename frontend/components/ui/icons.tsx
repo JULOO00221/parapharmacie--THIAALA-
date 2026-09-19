@@ -97,3 +97,11 @@ export function ChevronDownIcon(props: IconProps) {
     </Icon>
   );
 }
+
+export function MinusIcon(props: IconProps) {
+  return (
+    <Icon strokeWidth={2} {...props}>
+      <path d="M6 12h12" />
+    </Icon>
+  );
+}
