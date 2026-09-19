@@ -1,6 +1,6 @@
 import { CTA } from '@/components/ui/cta';
 import { WhatsAppIcon } from '@/components/ui/icons';
-import { hasWhatsApp, whatsappHref } from '@/lib/config/contact';
+import { WHATSAPP_LINK_PROPS, whatsappHref } from '@/lib/config/contact';
 
 /**
  * Bloc « Conseil du pharmacien » (DESIGN.md §2) : fond vert, surtitre or
@@ -31,7 +31,7 @@ export function PharmacistAdvice({ productName }: { productName?: string }) {
 
         <a
           href={whatsappHref(message)}
-          {...(hasWhatsApp() ? { target: '_blank', rel: 'noopener noreferrer' } : {})}
+          {...WHATSAPP_LINK_PROPS}
           className={`${CTA.onGreen} mt-1 shrink-0 lg:mt-0 lg:h-[58px] lg:px-[30px] lg:text-base`}
         >
           <WhatsAppIcon className="h-[19px] w-[19px]" />

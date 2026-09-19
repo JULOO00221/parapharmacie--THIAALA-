@@ -1,5 +1,5 @@
 import { WhatsAppIcon } from '@/components/ui/icons';
-import { hasWhatsApp, whatsappHref } from '@/lib/config/contact';
+import { WHATSAPP_LINK_PROPS, whatsappHref } from '@/lib/config/contact';
 import { cn } from '@/lib/utils/cn';
 
 const MESSAGE = 'Bonjour, je souhaite passer une commande auprès de la Parapharmacie THIAALA.';
@@ -10,14 +10,11 @@ const MESSAGE = 'Bonjour, je souhaite passer une commande auprès de la Paraphar
  * `icon` : cible 44 × 44 sans libellé visible (en-tête mobile).
  */
 export function WhatsAppButton({ variant, className }: { variant: 'pill' | 'icon'; className?: string }) {
-  const external = hasWhatsApp();
-  const linkProps = external ? { target: '_blank', rel: 'noopener noreferrer' } : {};
-
   if (variant === 'icon') {
     return (
       <a
         href={whatsappHref(MESSAGE)}
-        {...linkProps}
+        {...WHATSAPP_LINK_PROPS}
         aria-label="Commander sur WhatsApp"
         className={cn('flex h-11 w-11 items-center justify-center rounded-full text-vert hover:bg-ivoire', className)}
       >
@@ -29,7 +26,7 @@ export function WhatsAppButton({ variant, className }: { variant: 'pill' | 'icon
   return (
     <a
       href={whatsappHref(MESSAGE)}
-      {...linkProps}
+      {...WHATSAPP_LINK_PROPS}
       className={cn(
         'flex h-[46px] shrink-0 items-center gap-2.5 rounded-full bg-vert px-5 text-sm font-semibold text-white transition-colors hover:bg-brand-700',
         className,

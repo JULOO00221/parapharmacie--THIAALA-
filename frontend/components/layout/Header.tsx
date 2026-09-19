@@ -48,19 +48,19 @@ function HeaderDropdown({
   );
 }
 
-function Logo({ className, sizes }: { className: string; sizes: string }) {
+function Logo({ className }: { className: string }) {
   return (
-    // Lockup officiel (icône + nom + signature), recadré sur son contenu
-    // réel 889 × 244 — voir public/logo-thiaala.png. À remplacer par le SVG
-    // détouré dès qu'il existe (DESIGN.md §5).
-    <Link href="/" aria-label="Parapharmacie THIAALA — accueil" className={`relative block shrink-0 ${className}`}>
+    // Logo officiel en SVG (fond transparent, 615 × 242). La hauteur fixe
+    // la taille ; la largeur suit les proportions.
+    <Link href="/" aria-label="Parapharmacie THIAALA — accueil" className="block shrink-0">
       <Image
-        src="/logo-thiaala.png"
+        src="/logo-thiaala.svg"
         alt="Parapharmacie THIAALA — Santé, beauté, bien-être"
-        fill
-        sizes={sizes}
-        className="object-contain"
+        width={615}
+        height={242}
+        unoptimized
         priority
+        className={`w-auto ${className}`}
       />
     </Link>
   );
@@ -77,7 +77,7 @@ export async function Header() {
         c'est la version mobile (menu burger), vérifié visuellement.
       */}
       <div className="mx-auto hidden h-[88px] max-w-[1440px] items-center gap-12 px-16 xl:flex">
-        <Logo className="h-[65px] w-[236px]" sizes="236px" />
+        <Logo className="h-20" />
 
         <nav aria-label="Navigation principale" className="flex items-center gap-[30px]">
           <Link href="/" className={NAV_LINK}>
@@ -151,7 +151,7 @@ export async function Header() {
           </Suspense>
         </div>
 
-        <Logo className="h-[41px] w-[150px]" sizes="150px" />
+        <Logo className="h-[52px]" />
 
         <div className="flex items-center justify-end">
           <WhatsAppButton variant="icon" />

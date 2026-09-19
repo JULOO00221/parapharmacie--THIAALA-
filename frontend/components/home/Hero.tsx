@@ -2,7 +2,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { CTA } from '@/components/ui/cta';
 import { WhatsAppIcon } from '@/components/ui/icons';
-import { hasWhatsApp, whatsappHref } from '@/lib/config/contact';
+import { WHATSAPP_LINK_PROPS, whatsappHref } from '@/lib/config/contact';
 
 const ORDER_MESSAGE = 'Bonjour, je souhaite passer une commande auprès de la Parapharmacie THIAALA.';
 const QUESTION_MESSAGE = "Bonjour, j'ai une question sur un produit avant de commander.";
@@ -43,7 +43,7 @@ function HeroVisual() {
           mobile, le bloc conseil plus bas joue ce rôle. */}
       <a
         href={whatsappHref(QUESTION_MESSAGE)}
-        {...(hasWhatsApp() ? { target: '_blank', rel: 'noopener noreferrer' } : {})}
+        {...WHATSAPP_LINK_PROPS}
         className="absolute -left-10 bottom-9 hidden w-[292px] flex-col gap-[7px] rounded-2xl border border-bordure bg-blanc px-[22px] py-5 shadow-[0_12px_30px_rgba(18,59,46,0.08)] transition-colors hover:border-bordure-forte xl:flex"
       >
         <span className="text-[11px] font-semibold uppercase tracking-[0.18em] text-or">Conseil du pharmacien</span>
@@ -83,7 +83,7 @@ export function Hero({ brandCount }: { brandCount: number }) {
           </Link>
           <a
             href={whatsappHref(ORDER_MESSAGE)}
-            {...(hasWhatsApp() ? { target: '_blank', rel: 'noopener noreferrer' } : {})}
+            {...WHATSAPP_LINK_PROPS}
             className={CTA.secondary}
           >
             <WhatsAppIcon className="h-[18px] w-[18px]" />
