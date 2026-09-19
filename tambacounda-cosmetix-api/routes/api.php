@@ -14,22 +14,29 @@ use App\Http\Controllers\Api\V1\WaveWebhookController;
 use Illuminate\Support\Facades\Route;
 
 Route::prefix('v1')->name('api.v1.')->group(function () {
-    Route::get('products', [ProductController::class, 'index'])->name('products.index');
-    Route::get('products/{slug}', [ProductController::class, 'show'])->name('products.show');
+    // Lectures publiques du catalogue et des référentiels : aucun throttle.
+    // Le SSR Next.js les appelle pour chaque visiteur depuis les mêmes IP
+    // Vercel — un throttle par IP y bloquait tous les visiteurs ensemble
+    // (429). Ces routes ne modifient rien et ne révèlent aucune donnée
+    // personnelle ; la protection anti-abus relève du cache/CDN.
+    Route::withoutMiddleware('throttle:api')->group(function () {
+        Route::get('products', [ProductController::class, 'index'])->name('products.index');
+        Route::get('products/{slug}', [ProductController::class, 'show'])->name('products.show');
 
-    Route::get('categories', [CategoryController::class, 'index'])->name('categories.index');
-    Route::get('categories/{slug}', [CategoryController::class, 'show'])->name('categories.show');
+        Route::get('categories', [CategoryController::class, 'index'])->name('categories.index');
+        Route::get('categories/{slug}', [CategoryController::class, 'show'])->name('categories.show');
 
-    Route::get('brands', [BrandController::class, 'index'])->name('brands.index');
-    Route::get('brands/{slug}', [BrandController::class, 'show'])->name('brands.show');
+        Route::get('brands', [BrandController::class, 'index'])->name('brands.index');
+        Route::get('brands/{slug}', [BrandController::class, 'show'])->name('brands.show');
 
-    Route::get('tags', [TagController::class, 'index'])->name('tags.index');
+        Route::get('tags', [TagController::class, 'index'])->name('tags.index');
 
-    // Données de référence pour le checkout (sélecteur boutique / zone de
-    // livraison) — mêmes conventions que brands/tags : liste non paginée
-    // (petit référentiel borné), filtrée aux éléments actifs.
-    Route::get('stores', [StoreController::class, 'index'])->name('stores.index');
-    Route::get('delivery-zones', [DeliveryZoneController::class, 'index'])->name('delivery-zones.index');
+        // Données de référence pour le checkout (sélecteur boutique / zone de
+        // livraison) — mêmes conventions que brands/tags : liste non paginée
+        // (petit référentiel borné), filtrée aux éléments actifs.
+        Route::get('stores', [StoreController::class, 'index'])->name('stores.index');
+        Route::get('delivery-zones', [DeliveryZoneController::class, 'index'])->name('delivery-zones.index');
+    });
 
     Route::prefix('orders')->name('orders.')->group(function () {
         // Visiteur ET utilisateur authentifié autorisés — aucun
@@ -91,9 +98,8 @@ Route::prefix('v1')->name('api.v1.')->group(function () {
 
     Route::prefix('auth')->name('auth.')->group(function () {
         // Préfixe distinct (voir le commentaire sur le groupe orders
-        // ci-dessus) : sans lui, ce throttle partagerait sa clé de cache
-        // avec le throttle global de l'api group maintenant actif, et la
-        // limite réelle de 6/min serait atteinte deux fois plus vite.
+        // ci-dessus) : garde ce compteur 6/min isolé de tout autre
+        // throttle numérique appliqué à la même requête.
         Route::post('register', [AuthController::class, 'register'])
             ->middleware('throttle:6,1,auth')
             ->name('register');

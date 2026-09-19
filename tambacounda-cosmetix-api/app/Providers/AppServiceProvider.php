@@ -6,6 +6,9 @@ use App\Models\Stock;
 use App\Observers\StockObserver;
 use App\WhatsApp\MockWhatsAppProvider;
 use App\WhatsApp\WhatsAppProviderInterface;
+use Illuminate\Cache\RateLimiting\Limit;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
@@ -33,5 +36,11 @@ class AppServiceProvider extends ServiceProvider
         // mutation de Stock, quelle que soit son origine (OrderService,
         // édition Filament, import produit), voir StockObserver.
         Stock::observe(StockObserver::class);
+
+        // Garde-fou global du groupe api (voir bootstrap/app.php). Clé =
+        // IP client résolue depuis X-Forwarded-For par TrustProxies — pas
+        // l'IP du proxy. Les routes sensibles (auth, commandes, paiements)
+        // gardent leur propre throttle plus strict en plus de celui-ci.
+        RateLimiter::for('api', fn (Request $request) => Limit::perMinute(1000)->by($request->ip()));
     }
 }

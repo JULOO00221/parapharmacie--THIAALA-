@@ -15,9 +15,12 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
-        // Numeric syntax to stay consistent with the throttle:6,1 already
-        // used on auth/register and auth/login — no named limiter needed.
-        $middleware->throttleApi('60,1');
+        // Limiteur nommé « api » (1000/min par IP client, voir
+        // AppServiceProvider) : sa clé de cache inclut le nom du limiteur,
+        // donc aucun partage de compteur avec les throttles numériques
+        // préfixés des routes auth/orders/payments. L'IP client vient de
+        // X-Forwarded-For via config/trustedproxy.php.
+        $middleware->throttleApi('api');
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         $exceptions->shouldRenderJsonWhen(
