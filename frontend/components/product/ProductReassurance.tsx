@@ -5,7 +5,7 @@ const ITEMS = [
 ];
 
 /**
- * Same three factual capabilities as ReassuranceBar/ReassuranceSection, in
+ * Same factual capabilities as the AnnouncementBar and the homepage trust band, in
  * a compact list suited to sitting right under the add-to-cart CTA. No
  * claim beyond what's already validated (no delivery time, no "guaranteed
  * returns", no authenticity claim, no reviews).

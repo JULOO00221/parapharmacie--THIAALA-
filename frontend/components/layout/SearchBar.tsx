@@ -4,7 +4,13 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { useId, useState, type FormEvent } from 'react';
 import { SearchIcon } from '@/components/ui/icons';
 
-export function SearchBar({ className }: { className?: string }) {
+export function SearchBar({
+  className,
+  placeholder = 'Rechercher un produit, une marque…',
+}: {
+  className?: string;
+  placeholder?: string;
+}) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [value, setValue] = useState(searchParams.get('q') ?? '');
@@ -36,7 +42,7 @@ export function SearchBar({ className }: { className?: string }) {
           name="q"
           value={value}
           onChange={(event) => setValue(event.target.value)}
-          placeholder="Rechercher un produit, une marque…"
+          placeholder={placeholder}
           className="w-full bg-transparent text-base text-encre xl:text-[13.5px] placeholder:text-texte-discret focus:outline-none"
         />
       </div>

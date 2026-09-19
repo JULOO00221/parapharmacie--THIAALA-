@@ -11,6 +11,7 @@ import { ProductReassurance } from '@/components/product/ProductReassurance';
 import { StockBadge } from '@/components/product/StockBadge';
 import { getProduct, getProducts } from '@/lib/api/products';
 import { discountPercent } from '@/lib/utils/pricing';
+import { visibleShortDescription } from '@/lib/utils/product';
 
 export const dynamic = 'force-dynamic';
 
@@ -57,6 +58,7 @@ export default async function ProductPage({ params }: PageProps<'/produits/[slug
     .slice(0, 4);
 
   const percentOff = discountPercent(product.price, product.compare_at_price);
+  const shortDescription = visibleShortDescription(product);
 
   const jsonLd = {
     '@context': 'https://schema.org',
@@ -121,7 +123,7 @@ export default async function ProductPage({ params }: PageProps<'/produits/[slug
               <StockBadge status={product.stock_status} />
             </div>
 
-            {product.short_description && <p className="mt-4 text-ink-muted">{product.short_description}</p>}
+            {shortDescription && <p className="mt-4 text-ink-muted">{shortDescription}</p>}
 
             <ProductAddToCart product={product} />
 

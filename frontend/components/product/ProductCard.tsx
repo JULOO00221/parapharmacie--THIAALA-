@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { AddToCartButton } from '@/components/cart/AddToCartButton';
 import type { Product } from '@/lib/api/types';
 import { discountPercent } from '@/lib/utils/pricing';
+import { visibleShortDescription } from '@/lib/utils/product';
 import { PriceTag } from './PriceTag';
 import { ProductBadges } from './ProductBadges';
 import { ProductImagePlaceholder } from './ProductImagePlaceholder';
@@ -23,6 +24,7 @@ const STOCK_NOTICE: Partial<Record<Product['stock_status'], string>> = {
 export function ProductCard({ product }: { product: Product }) {
   const percentOff = discountPercent(product.price, product.compare_at_price);
   const stockNotice = STOCK_NOTICE[product.stock_status];
+  const shortDescription = visibleShortDescription(product);
 
   return (
     <article className="group relative flex flex-col overflow-hidden rounded-[14px] border border-bordure bg-blanc transition-colors hover:border-bordure-forte sm:rounded-[18px]">
@@ -58,8 +60,8 @@ export function ProductCard({ product }: { product: Product }) {
           </Link>
         </h3>
 
-        {product.short_description && (
-          <p className="line-clamp-1 text-xs text-texte-discret sm:text-[12.5px]">{product.short_description}</p>
+        {shortDescription && (
+          <p className="line-clamp-1 text-xs text-texte-discret sm:text-[12.5px]">{shortDescription}</p>
         )}
 
         {stockNotice && (

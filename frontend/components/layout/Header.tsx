@@ -112,7 +112,7 @@ export async function Header() {
 
         <div className="flex flex-1 items-center justify-end gap-3">
           <Suspense fallback={<div className="h-[46px] w-[266px]" aria-hidden="true" />}>
-            <SearchBar className="w-full max-w-[266px]" />
+            <SearchBar className="w-full max-w-[266px]" placeholder="Rechercher un produit…" />
           </Suspense>
 
           <HeaderDropdown
