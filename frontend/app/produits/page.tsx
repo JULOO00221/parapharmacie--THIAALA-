@@ -1,96 +1,47 @@
 import type { Metadata } from 'next';
-import { FilterPanel } from '@/components/catalog/FilterPanel';
-import { Pagination } from '@/components/catalog/Pagination';
-import { ProductGrid } from '@/components/catalog/ProductGrid';
+import { CatalogView } from '@/components/catalog/CatalogView';
 import { getBrands } from '@/lib/api/brands';
 import { getCategories } from '@/lib/api/categories';
-import { getProducts, type ProductFilters, type ProductSort } from '@/lib/api/products';
-import { getTags } from '@/lib/api/tags';
+import { getProducts } from '@/lib/api/products';
+import { CATALOG_PER_PAGE, parseCatalogParams, toProductFilters, type CatalogScope } from '@/lib/catalog/params';
 
 export const dynamic = 'force-dynamic';
 
 export const metadata: Metadata = {
   title: 'Tous les produits',
-  description: 'Parcourez le catalogue complet Parapharmacie THIAALA : soins du visage, du corps, cheveux et hygiène.',
+  description:
+    'Tout le catalogue de la Parapharmacie THIAALA à Tambacounda : soins du visage, du corps, cheveux, bébé et hygiène, livrés dans toute la région.',
   alternates: { canonical: '/produits' },
 };
 
-const SORT_VALUES: ProductSort[] = ['name_asc', 'name_desc', 'price_asc', 'price_desc', 'newest', 'featured_first'];
-
-function firstValue(value: string | string[] | undefined): string | undefined {
-  return Array.isArray(value) ? value[0] : value;
-}
+const SCOPE: CatalogScope = { kind: 'all' };
 
 export default async function ProductsPage({ searchParams }: PageProps<'/produits'>) {
-  const query = await searchParams;
+  const params = parseCatalogParams(await searchParams, SCOPE);
 
-  const q = firstValue(query.q);
-  const category = firstValue(query.category);
-  const brand = firstValue(query.brand);
-  const tags = firstValue(query.tags);
-  const priceMin = firstValue(query.price_min);
-  const priceMax = firstValue(query.price_max);
-  const inStock = firstValue(query.in_stock);
-  const featured = firstValue(query.featured);
-  const sortParam = firstValue(query.sort);
-  const sort = SORT_VALUES.includes(sortParam as ProductSort) ? (sortParam as ProductSort) : undefined;
-  const page = firstValue(query.page);
-  const perPage = firstValue(query.per_page);
-
-  const filters: ProductFilters = {
-    q,
-    category,
-    brand,
-    tags,
-    price_min: priceMin ? Number(priceMin) : undefined,
-    price_max: priceMax ? Number(priceMax) : undefined,
-    in_stock: inStock === '1' ? true : undefined,
-    featured: featured === '1' ? true : undefined,
-    sort,
-    page: page ? Number(page) : undefined,
-    per_page: perPage ? Number(perPage) : undefined,
-  };
-
-  const [products, categories, brands, allTags] = await Promise.all([
-    getProducts(filters),
-    getCategories(),
-    getBrands(),
-    getTags(),
+  const [products, categories, brands] = await Promise.all([
+    getProducts(toProductFilters(params, CATALOG_PER_PAGE)),
+    // Comptes des filtres dans le périmètre courant : catégories comptées
+    // pour la marque choisie, marques limitées à la catégorie choisie.
+    getCategories({ brand: params.brand }),
+    getBrands({ category: params.category }),
   ]);
 
   return (
-    <div className="mx-auto max-w-6xl px-4 py-10 sm:px-6">
-      <header className="mb-6">
-        <h1 className="text-2xl font-bold text-ink sm:text-3xl">Tous les produits</h1>
-        <p className="mt-1 text-sm text-ink-muted">
-          {products.meta.total} produit{products.meta.total > 1 ? 's' : ''}
-          {q && <> pour « {q} »</>}
-        </p>
-      </header>
-
-      <div className="flex flex-col gap-6 lg:flex-row">
-        <FilterPanel
-          categories={categories}
-          brands={brands}
-          tags={allTags}
-          values={{
-            q,
-            category,
-            brand,
-            tags,
-            price_min: priceMin,
-            price_max: priceMax,
-            in_stock: inStock,
-            featured,
-            sort,
-          }}
-        />
-
-        <div className="flex-1">
-          <ProductGrid products={products.data} />
-          <Pagination meta={products.meta} basePath="/produits" searchParams={{ ...query, page: undefined }} />
-        </div>
-      </div>
-    </div>
+    <CatalogView
+      scope={SCOPE}
+      params={params}
+      title={params.q ? `Résultats pour « ${params.q} »` : 'Tous les produits'}
+      description={
+        params.q
+          ? null
+          : 'Soins du visage, du corps, des cheveux, bébé et hygiène : tout le catalogue, livré à Tambacounda et dans la région.'
+      }
+      breadcrumb={[{ label: 'Accueil', href: '/' }, { label: 'Tous les produits' }]}
+      countContext={params.q ? `pour « ${params.q} »` : 'au catalogue'}
+      products={products}
+      categories={categories}
+      brands={brands}
+    />
   );
 }

@@ -6,10 +6,15 @@ interface FetchOptions {
   cache?: RequestCache;
 }
 
-/** GET /brands — active brands only, or [] if the API fails. Never throws. */
-export async function getBrands(options: FetchOptions = {}): Promise<Brand[]> {
+/**
+ * GET /brands — active brands with `products_count`, or [] if the API
+ * fails. Never throws. With `category`, only the brands that have products
+ * in that category (subcategories included), counted within it.
+ */
+export async function getBrands(options: FetchOptions & { category?: string } = {}): Promise<Brand[]> {
   return withFallback('GET /brands', [], async () => {
     const response = await apiGet<{ data: Brand[] }>('/brands', {
+      params: { category: options.category },
       signal: options.signal,
       ...catalogCacheOptions(options.cache),
     });

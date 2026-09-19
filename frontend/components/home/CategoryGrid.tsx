@@ -109,7 +109,8 @@ function subtitle(category: Category): string | null {
 
 /** Les 8 rayons : d'abord ceux de RAYONS, puis les autres catégories de premier niveau. */
 function pickRayons(categories: Category[]): Array<{ category: Category; icon: ReactNode }> {
-  const topLevel = categories.filter((category) => !category.parent);
+  // Rayons sans produit écartés (products_count couvre les sous-catégories).
+  const topLevel = categories.filter((category) => !category.parent && category.products_count !== 0);
   const bySlug = new Map(topLevel.map((category) => [category.slug, category]));
 
   const preferred = RAYONS.flatMap(({ slug, icon }) => {

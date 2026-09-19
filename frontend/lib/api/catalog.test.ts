@@ -35,6 +35,19 @@ describe('lib/api catalogue reads', () => {
     }
   });
 
+  it('scopes brand and category lists through query parameters', async () => {
+    const fetchSpy = vi.spyOn(global, 'fetch').mockImplementation(async () => jsonResponse({ data: [] }));
+
+    await getBrands({ category: 'soins-du-visage' });
+    await getCategories({ brand: 'avene' });
+    await getBrands();
+
+    const urls = fetchSpy.mock.calls.map(([url]) => String(url));
+    expect(urls[0]).toMatch(/\/brands\?category=soins-du-visage$/);
+    expect(urls[1]).toMatch(/\/categories\?brand=avene$/);
+    expect(urls[2]).toMatch(/\/brands$/);
+  });
+
   it('drops revalidate when the caller forces an explicit cache mode', async () => {
     const fetchSpy = vi.spyOn(global, 'fetch').mockResolvedValue(jsonResponse({ data: [] }));
 

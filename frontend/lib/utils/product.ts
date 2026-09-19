@@ -1,13 +1,5 @@
 import type { Brand, Product } from '@/lib/api/types';
-
-function normalize(text: string): string {
-  return text
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .replace(/\s+/g, ' ')
-    .trim()
-    .toLowerCase();
-}
+import { normalizeText } from './text';
 
 /**
  * The short description to display, or null when it adds nothing. Much of
@@ -20,7 +12,7 @@ export function visibleShortDescription(product: Pick<Product, 'name' | 'short_d
 
   if (!description) return null;
 
-  return normalize(description) === normalize(product.name) ? null : description;
+  return normalizeText(description) === normalizeText(product.name) ? null : description;
 }
 
 /**

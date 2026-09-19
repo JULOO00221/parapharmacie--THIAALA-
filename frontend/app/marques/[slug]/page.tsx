@@ -1,11 +1,11 @@
 import type { Metadata } from 'next';
-import Image from 'next/image';
 import { notFound } from 'next/navigation';
 import { cache } from 'react';
-import { ProductGrid } from '@/components/catalog/ProductGrid';
-import { Pagination } from '@/components/catalog/Pagination';
-import { getBrand } from '@/lib/api/brands';
+import { CatalogView } from '@/components/catalog/CatalogView';
+import { getBrand, getBrands } from '@/lib/api/brands';
+import { getCategories } from '@/lib/api/categories';
 import { getProducts } from '@/lib/api/products';
+import { CATALOG_PER_PAGE, parseCatalogParams, toProductFilters } from '@/lib/catalog/params';
 
 export const dynamic = 'force-dynamic';
 
@@ -30,7 +30,9 @@ export async function generateMetadata({ params }: PageProps<'/marques/[slug]'>)
 
   return {
     title: brand.name,
-    description: brand.description ?? `Produits de la marque ${brand.name} chez Parapharmacie THIAALA.`,
+    description:
+      brand.description ??
+      `Produits ${brand.name} à la Parapharmacie THIAALA, livrés à Tambacounda et dans la région.`,
     alternates: { canonical: `/marques/${brand.slug}` },
     openGraph: {
       title: brand.name,
@@ -40,35 +42,30 @@ export async function generateMetadata({ params }: PageProps<'/marques/[slug]'>)
   };
 }
 
-export default async function BrandPage({ params, searchParams }: PageProps<'/marques/[slug]'>) {
-  const { slug } = await params;
-  const query = await searchParams;
-  const page = typeof query.page === 'string' ? query.page : '1';
+export default async function BrandPage({ params: routeParams, searchParams }: PageProps<'/marques/[slug]'>) {
+  const { slug } = await routeParams;
+  const scope = { kind: 'brand', slug } as const;
+  const params = parseCatalogParams(await searchParams, scope);
 
-  const brand = await loadBrand(slug);
-  const products = await getProducts({ brand: slug, page: Number(page) });
+  const [brand, products, categories, brands] = await Promise.all([
+    loadBrand(slug),
+    getProducts(toProductFilters(params, CATALOG_PER_PAGE)),
+    // Catégories comptées pour cette marque seulement.
+    getCategories({ brand: slug }),
+    getBrands({ category: params.category }),
+  ]);
 
   return (
-    <div className="mx-auto max-w-6xl px-4 py-10 sm:px-6">
-      <header className="mb-8 flex items-center gap-4">
-        {brand.logo_url && (
-          <Image src={brand.logo_url} alt={brand.name} width={64} height={64} className="rounded-full border border-border" />
-        )}
-        <div>
-          <h1 className="text-2xl font-bold text-ink sm:text-3xl">{brand.name}</h1>
-          <p className="text-sm text-ink-muted">{products.meta.total} produit{products.meta.total > 1 ? 's' : ''}</p>
-        </div>
-      </header>
-
-      {brand.description && <p className="mb-8 max-w-2xl text-ink-muted">{brand.description}</p>}
-
-      <ProductGrid
-        products={products.data}
-        emptyTitle="Aucun produit de cette marque pour le moment"
-        emptyDescription="Revenez bientôt, le catalogue est mis à jour régulièrement."
-      />
-
-      <Pagination meta={products.meta} basePath={`/marques/${slug}`} searchParams={{ page: page !== '1' ? page : undefined }} />
-    </div>
+    <CatalogView
+      scope={scope}
+      params={params}
+      title={brand.name}
+      description={brand.description}
+      breadcrumb={[{ label: 'Accueil', href: '/' }, { label: 'Tous les produits', href: '/produits' }, { label: brand.name }]}
+      countContext={params.q ? `pour « ${params.q} » de cette marque` : 'de cette marque'}
+      products={products}
+      categories={categories}
+      brands={brands}
+    />
   );
 }

@@ -16,9 +16,9 @@ import { WhatsAppButton } from './WhatsAppButton';
 const NAV_LINK = 'flex h-11 items-center text-[15px] font-medium text-vert hover:text-or';
 
 /**
- * Zero-JS dropdown — same <details>/<summary> pattern as FilterPanel's
- * mobile accordion. Trade-off accepted deliberately: it doesn't auto-close
- * on outside click (native <details> limitation).
+ * Zero-JS dropdown — native <details>/<summary>, the same pattern as the
+ * mobile menu's sections. Trade-off accepted deliberately: it doesn't
+ * auto-close on outside click (native <details> limitation).
  */
 function HeaderDropdown({
   summary,

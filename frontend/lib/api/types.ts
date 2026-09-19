@@ -18,6 +18,8 @@ export interface Brand {
   description: string | null;
   website: string | null;
   logo_url: string | null;
+  /** Active products. Only on GET /brands (scoped by ?category= when given), absent elsewhere. */
+  products_count?: number;
 }
 
 /** Minimal category reference, used for Category.parent. */
@@ -42,6 +44,11 @@ export interface Category {
    */
   parent?: CategoryRef | null;
   children?: Category[];
+  /**
+   * Active products of the whole subtree — what /products?category= returns.
+   * Only on GET /categories and /categories/{slug}; absent when nested in a product.
+   */
+  products_count?: number;
 }
 
 export interface Tag {

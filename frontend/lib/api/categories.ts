@@ -8,11 +8,13 @@ interface FetchOptions {
 
 /**
  * GET /categories — active categories only, with parent/children
- * eager-loaded, or [] if the API fails. Never throws.
+ * eager-loaded and `products_count` (whole subtree), or [] if the API
+ * fails. Never throws. With `brand`, counts are limited to that brand.
  */
-export async function getCategories(options: FetchOptions = {}): Promise<Category[]> {
+export async function getCategories(options: FetchOptions & { brand?: string } = {}): Promise<Category[]> {
   return withFallback('GET /categories', [], async () => {
     const response = await apiGet<{ data: Category[] }>('/categories', {
+      params: { brand: options.brand },
       signal: options.signal,
       ...catalogCacheOptions(options.cache),
     });

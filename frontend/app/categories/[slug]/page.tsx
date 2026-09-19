@@ -1,10 +1,12 @@
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { cache } from 'react';
-import { ProductGrid } from '@/components/catalog/ProductGrid';
-import { Pagination } from '@/components/catalog/Pagination';
-import { getCategory } from '@/lib/api/categories';
+import { CatalogView } from '@/components/catalog/CatalogView';
+import type { BreadcrumbItem } from '@/components/catalog/Breadcrumb';
+import { getBrands } from '@/lib/api/brands';
+import { getCategories, getCategory } from '@/lib/api/categories';
 import { getProducts } from '@/lib/api/products';
+import { CATALOG_PER_PAGE, parseCatalogParams, toProductFilters } from '@/lib/catalog/params';
 
 export const dynamic = 'force-dynamic';
 
@@ -29,7 +31,9 @@ export async function generateMetadata({ params }: PageProps<'/categories/[slug]
 
   return {
     title: category.name,
-    description: category.description ?? `Découvrez nos produits ${category.name.toLowerCase()} chez Parapharmacie THIAALA.`,
+    description:
+      category.description ??
+      `${category.name} : découvrez nos produits à la Parapharmacie THIAALA, livrés à Tambacounda et dans la région.`,
     alternates: { canonical: `/categories/${category.slug}` },
     openGraph: {
       title: category.name,
@@ -39,30 +43,37 @@ export async function generateMetadata({ params }: PageProps<'/categories/[slug]
   };
 }
 
-export default async function CategoryPage({ params, searchParams }: PageProps<'/categories/[slug]'>) {
-  const { slug } = await params;
-  const query = await searchParams;
-  const page = typeof query.page === 'string' ? query.page : '1';
+export default async function CategoryPage({ params: routeParams, searchParams }: PageProps<'/categories/[slug]'>) {
+  const { slug } = await routeParams;
+  const scope = { kind: 'category', slug } as const;
+  const params = parseCatalogParams(await searchParams, scope);
 
-  const category = await loadCategory(slug);
-  const products = await getProducts({ category: slug, page: Number(page) });
+  const [category, products, categories, brands] = await Promise.all([
+    loadCategory(slug),
+    getProducts(toProductFilters(params, CATALOG_PER_PAGE)),
+    getCategories({ brand: params.brand }),
+    // Seulement les marques qui ont des produits dans ce rayon.
+    getBrands({ category: slug }),
+  ]);
+
+  const breadcrumb: BreadcrumbItem[] = [
+    { label: 'Accueil', href: '/' },
+    { label: 'Tous les produits', href: '/produits' },
+    ...(category.parent ? [{ label: category.parent.name, href: `/categories/${category.parent.slug}` }] : []),
+    { label: category.name },
+  ];
 
   return (
-    <div className="mx-auto max-w-6xl px-4 py-10 sm:px-6">
-      <header className="mb-8">
-        {category.parent && <p className="text-sm text-ink-muted">{category.parent.name}</p>}
-        <h1 className="text-2xl font-bold text-ink sm:text-3xl">{category.name}</h1>
-        {category.description && <p className="mt-2 max-w-2xl text-ink-muted">{category.description}</p>}
-        <p className="mt-2 text-sm text-ink-muted">{products.meta.total} produit{products.meta.total > 1 ? 's' : ''}</p>
-      </header>
-
-      <ProductGrid
-        products={products.data}
-        emptyTitle="Aucun produit dans cette catégorie pour le moment"
-        emptyDescription="Revenez bientôt, le catalogue est mis à jour régulièrement."
-      />
-
-      <Pagination meta={products.meta} basePath={`/categories/${slug}`} searchParams={{ page: page !== '1' ? page : undefined }} />
-    </div>
+    <CatalogView
+      scope={scope}
+      params={params}
+      title={category.name}
+      description={category.description}
+      breadcrumb={breadcrumb}
+      countContext={params.q ? `pour « ${params.q} » dans cette catégorie` : 'dans cette catégorie'}
+      products={products}
+      categories={categories}
+      brands={brands}
+    />
   );
 }

@@ -14,6 +14,11 @@ const NBSP = '\u00a0';
 
 const priceFormatter = new Intl.NumberFormat('fr-FR', { maximumFractionDigits: 0 });
 
+/** Whole number with fr-FR grouping and regular no-break spaces, e.g. "1 234". */
+export function formatNumber(value: number): string {
+  return priceFormatter.format(value).replace(NARROW_NBSP, NBSP);
+}
+
 export function formatPrice(value: string | number): string {
   const amount = typeof value === 'string' ? Number.parseFloat(value) : value;
 
@@ -21,5 +26,5 @@ export function formatPrice(value: string | number): string {
     return '—';
   }
 
-  return `${priceFormatter.format(amount).replace(NARROW_NBSP, NBSP)}${NBSP}FCFA`;
+  return `${formatNumber(amount)}${NBSP}FCFA`;
 }

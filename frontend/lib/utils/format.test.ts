@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { formatPrice } from './format';
+import { formatNumber, formatPrice } from './format';
 
 describe('formatPrice', () => {
   it('groups thousands and separates the currency with a regular no-break space', () => {
@@ -17,5 +17,12 @@ describe('formatPrice', () => {
 
   it('renders a dash for non-numeric input', () => {
     expect(formatPrice('abc')).toBe('—');
+  });
+});
+
+describe('formatNumber', () => {
+  it('groups thousands with a regular no-break space', () => {
+    expect(formatNumber(1234)).toBe('1\u00a0234');
+    expect(formatNumber(69)).toBe('69');
   });
 });
