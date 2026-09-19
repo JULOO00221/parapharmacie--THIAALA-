@@ -9,8 +9,8 @@
  * no-break space (U+00A0) is used instead, everywhere, so prices never
  * render differently from one component to another.
  */
-const NARROW_NBSP = / /g;
-const NBSP = ' ';
+const NARROW_NBSP = /\u202f/g;
+const NBSP = '\u00a0';
 
 const priceFormatter = new Intl.NumberFormat('fr-FR', { maximumFractionDigits: 0 });
 
