@@ -1,0 +1,16 @@
+[Unit]
+# Planificateur Laravel (routes/console.php) : payments:expire-stale chaque
+# minute. Sans lui, une tentative de paiement Wave abandonnée laisse sa
+# commande bloquée et son stock réservé indéfiniment.
+Description=Planificateur Laravel — Parapharmacie THIAALA
+After=network.target
+
+[Service]
+Type=oneshot
+User=www-data
+Group=www-data
+WorkingDirectory=/var/www/tambacounda-cosmetix/tambacounda-cosmetix-api
+ExecStart=/usr/bin/php artisan schedule:run
+
+NoNewPrivileges=true
+PrivateTmp=true

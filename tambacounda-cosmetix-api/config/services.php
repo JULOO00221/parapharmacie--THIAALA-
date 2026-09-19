@@ -78,4 +78,22 @@ return [
         'manager_phone' => env('WHATSAPP_MANAGER_PHONE'),
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | Frontend Next.js — invalidation du cache du catalogue
+    |--------------------------------------------------------------------------
+    |
+    | Après chaque modification du catalogue (CatalogCacheObserver) et après
+    | chaque déploiement (php artisan catalog:revalidate-frontend), Laravel
+    | appelle POST {url}/api/revalidate avec ce secret en Bearer. Le même
+    | secret est défini dans Vercel sous le nom REVALIDATE_SECRET. Sans
+    | secret, rien n'est appelé : le frontend retombe sur son cache de
+    | 5 minutes.
+    |
+    */
+    'frontend' => [
+        'url' => env('FRONTEND_URL', 'http://localhost:3000'),
+        'revalidate_secret' => env('FRONTEND_REVALIDATE_SECRET'),
+    ],
+
 ];

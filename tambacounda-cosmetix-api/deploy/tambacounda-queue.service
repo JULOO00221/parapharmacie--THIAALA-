@@ -1,0 +1,31 @@
+[Unit]
+# Worker de file Laravel : notifications WhatsApp (commandes, paiements,
+# stock bas) et invalidation du cache du catalogue côté frontend. Sans lui,
+# ces jobs s'empilent dans Redis sans jamais s'exécuter.
+Description=File d'attente Laravel — Parapharmacie THIAALA
+After=network.target redis-server.service
+Wants=redis-server.service
+
+[Service]
+Type=simple
+User=www-data
+Group=www-data
+WorkingDirectory=/var/www/tambacounda-cosmetix/tambacounda-cosmetix-api
+
+# --max-time : le worker se termine au bout d'une heure et systemd le
+# relance, ce qui libère la mémoire et charge le code déployé entre-temps.
+# Les $tries et $backoff définis par chaque job priment sur les options ici.
+ExecStart=/usr/bin/php artisan queue:work redis --queue=default --sleep=3 --tries=3 --max-time=3600
+
+Restart=always
+RestartSec=5
+
+# Arrêt propre : Laravel finit le job en cours avant de sortir.
+KillSignal=SIGTERM
+TimeoutStopSec=90
+
+NoNewPrivileges=true
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target

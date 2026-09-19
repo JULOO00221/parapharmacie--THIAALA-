@@ -32,6 +32,8 @@
         <env name="DB_URL" value=""/>
         <env name="MAIL_MAILER" value="array"/>
         <env name="QUEUE_CONNECTION" value="sync"/>
+        <!-- Jamais d'appel réel au frontend depuis les tests (voir FrontendRevalidationTest). -->
+        <env name="FRONTEND_REVALIDATE_SECRET" value=""/>
         <env name="SESSION_DRIVER" value="array"/>
         <env name="PULSE_ENABLED" value="false"/>
         <env name="TELESCOPE_ENABLED" value="false"/>

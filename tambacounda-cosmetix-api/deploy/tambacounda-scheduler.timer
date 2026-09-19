@@ -1,0 +1,12 @@
+[Unit]
+Description=Déclenche le planificateur Laravel chaque minute
+
+[Timer]
+OnCalendar=*:0/1
+# Rattrape l'exécution manquée après un redémarrage de la machine.
+Persistent=true
+AccuracySec=1s
+Unit=tambacounda-scheduler.service
+
+[Install]
+WantedBy=timers.target

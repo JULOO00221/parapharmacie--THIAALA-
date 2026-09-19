@@ -2,7 +2,13 @@
 
 namespace App\Providers;
 
+use App\Models\Brand;
+use App\Models\Product;
+use App\Models\ProductCategory;
+use App\Models\ProductImage;
 use App\Models\Stock;
+use App\Models\Tag;
+use App\Observers\CatalogCacheObserver;
 use App\Observers\StockObserver;
 use App\WhatsApp\MockWhatsAppProvider;
 use App\WhatsApp\WhatsAppProviderInterface;
@@ -36,6 +42,13 @@ class AppServiceProvider extends ServiceProvider
         // mutation de Stock, quelle que soit son origine (OrderService,
         // édition Filament, import produit), voir StockObserver.
         Stock::observe(StockObserver::class);
+
+        // Toute écriture sur une donnée que le frontend met en cache vide
+        // son cache du catalogue (job dédoublonné, après commit) — voir
+        // CatalogCacheObserver et RevalidateFrontendCatalog.
+        foreach ([Product::class, ProductCategory::class, Brand::class, Tag::class, ProductImage::class, Stock::class] as $model) {
+            $model::observe(CatalogCacheObserver::class);
+        }
 
         // Garde-fou global du groupe api (voir bootstrap/app.php). Clé =
         // IP client résolue depuis X-Forwarded-For par TrustProxies — pas
