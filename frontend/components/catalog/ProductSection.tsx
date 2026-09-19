@@ -1,43 +1,45 @@
-import Link from 'next/link';
+import { SectionHeading } from '@/components/ui/SectionHeading';
 import type { Product } from '@/lib/api/types';
 import { ProductGrid } from './ProductGrid';
 
 /**
- * Shared shape for the homepage's product-driven sections (Mis en avant /
- * Promotions / Nouveautés) — each hides itself entirely rather than
- * rendering an empty heading over nothing, so a section only ever appears
- * when it has real products to show.
+ * Section produits (sélection de l'accueil, produits similaires de la fiche
+ * produit). Se masque entièrement quand elle n'a aucun produit réel à
+ * montrer, plutôt que d'afficher un titre au-dessus du vide.
  */
 export function ProductSection({
   id,
+  eyebrow,
   title,
-  description,
   viewAllHref,
   products,
 }: {
   id?: string;
+  eyebrow: string;
   title: string;
-  description?: string;
   viewAllHref?: string;
   products: Product[];
 }) {
   if (products.length === 0) return null;
 
-  return (
-    <section id={id} className="mx-auto max-w-6xl px-4 py-12 sm:px-6">
-      <div className="mb-6 flex flex-wrap items-end justify-between gap-4">
-        <div>
-          <h2 className="font-display text-xl font-semibold text-ink sm:text-2xl">{title}</h2>
-          {description && <p className="mt-1 text-sm text-ink-muted">{description}</p>}
-        </div>
-        {viewAllHref && (
-          <Link href={viewAllHref} className="shrink-0 text-sm font-medium text-brand-700 hover:underline">
-            Tout voir
-          </Link>
-        )}
-      </div>
+  const headingId = id ? `${id}-title` : undefined;
 
-      <ProductGrid products={products} />
+  return (
+    <section
+      id={id}
+      aria-labelledby={headingId}
+      className="mx-auto max-w-[1440px] px-5 pt-[34px] sm:px-8 lg:px-16 lg:pt-[78px]"
+    >
+      <SectionHeading
+        id={headingId}
+        eyebrow={eyebrow}
+        title={title}
+        link={viewAllHref ? { href: viewAllHref, label: 'Tout voir' } : undefined}
+      />
+
+      <div className="mt-[18px] lg:mt-[34px]">
+        <ProductGrid products={products} />
+      </div>
     </section>
   );
 }

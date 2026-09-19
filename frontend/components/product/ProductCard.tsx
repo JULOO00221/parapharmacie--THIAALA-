@@ -3,7 +3,7 @@ import Link from 'next/link';
 import { AddToCartButton } from '@/components/cart/AddToCartButton';
 import type { Product } from '@/lib/api/types';
 import { discountPercent } from '@/lib/utils/pricing';
-import { visibleShortDescription } from '@/lib/utils/product';
+import { isRealBrand, visibleShortDescription } from '@/lib/utils/product';
 import { PriceTag } from './PriceTag';
 import { ProductBadges } from './ProductBadges';
 import { ProductImagePlaceholder } from './ProductImagePlaceholder';
@@ -45,7 +45,7 @@ export function ProductCard({ product }: { product: Product }) {
       </div>
 
       <div className="flex flex-1 flex-col gap-1 px-[13px] pb-3.5 pt-3 sm:gap-[7px] sm:px-5 sm:pb-5 sm:pt-[18px]">
-        {product.brand && (
+        {product.brand && isRealBrand(product.brand) && (
           <p className="text-[9.5px] font-semibold uppercase tracking-[0.14em] text-or sm:text-[11px] sm:tracking-[0.16em]">
             {product.brand.name}
           </p>

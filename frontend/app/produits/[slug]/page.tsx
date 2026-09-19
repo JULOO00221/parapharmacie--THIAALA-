@@ -161,6 +161,7 @@ export default async function ProductPage({ params }: PageProps<'/produits/[slug
       </div>
 
       <ProductSection
+        eyebrow="Dans le même rayon"
         title="Produits similaires"
         viewAllHref={`/categories/${product.category.slug}`}
         products={related}

@@ -1,4 +1,4 @@
-import type { Product } from '@/lib/api/types';
+import type { Brand, Product } from '@/lib/api/types';
 
 function normalize(text: string): string {
   return text
@@ -23,3 +23,11 @@ export function visibleShortDescription(product: Pick<Product, 'name' | 'short_d
   return normalize(description) === normalize(product.name) ? null : description;
 }
 
+/**
+ * The imported catalogue has placeholder brands for unbranded items
+ * ("(accessoire, sans marque)", "(générique parfum)", "Autre"): real
+ * catalogue entries, but not brands to showcase or count.
+ */
+export function isRealBrand(brand: Pick<Brand, 'name'>): boolean {
+  return !brand.name.trim().startsWith('(') && brand.name.trim().toLowerCase() !== 'autre';
+}

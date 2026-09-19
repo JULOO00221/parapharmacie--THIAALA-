@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { visibleShortDescription } from './product';
+import { isRealBrand, visibleShortDescription } from './product';
 
 describe('visibleShortDescription', () => {
   it('hides a description identical to the product name', () => {
@@ -17,5 +17,13 @@ describe('visibleShortDescription', () => {
   it('returns null for a missing or blank description', () => {
     expect(visibleShortDescription({ name: 'Savon', short_description: null })).toBeNull();
     expect(visibleShortDescription({ name: 'Savon', short_description: '   ' })).toBeNull();
+  });
+});
+
+describe('isRealBrand', () => {
+  it('excludes placeholder brands from the import', () => {
+    expect(isRealBrand({ name: '(accessoire, sans marque)' })).toBe(false);
+    expect(isRealBrand({ name: 'Autre' })).toBe(false);
+    expect(isRealBrand({ name: 'Bioderma' })).toBe(true);
   });
 });

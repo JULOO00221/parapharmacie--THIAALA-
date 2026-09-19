@@ -1,84 +1,59 @@
-import Link from 'next/link';
+import { ProductSection } from '@/components/catalog/ProductSection';
 import { BrandsShowcase } from '@/components/home/BrandsShowcase';
+import { CategoryGrid } from '@/components/home/CategoryGrid';
+import { DeliveryZonesSection } from '@/components/home/DeliveryZonesSection';
 import { Hero } from '@/components/home/Hero';
 import { ReassuranceSection } from '@/components/home/ReassuranceSection';
-import { EmptyState } from '@/components/ui/EmptyState';
-import { ProductSection } from '@/components/catalog/ProductSection';
+import { PharmacistAdvice } from '@/components/layout/PharmacistAdvice';
 import { getBrands } from '@/lib/api/brands';
 import { getCategories } from '@/lib/api/categories';
+import { withFallback } from '@/lib/api/client';
+import { getDeliveryZones } from '@/lib/api/delivery-zones';
 import { getProducts } from '@/lib/api/products';
-import { isDiscounted } from '@/lib/utils/pricing';
+import type { DeliveryZone, Product } from '@/lib/api/types';
+import { isRealBrand } from '@/lib/utils/product';
 
 export const dynamic = 'force-dynamic';
 
+const SELECTION_SIZE = 4;
+
+/**
+ * Sélection de l'accueil : les produits mis en avant d'abord, complétés par
+ * les plus récents (sort=newest, le même tri que « Plus récents » au
+ * catalogue) quand il y en a moins que SELECTION_SIZE.
+ */
+function buildSelection(featured: Product[], newest: Product[]): Product[] {
+  const featuredIds = new Set(featured.map((product) => product.id));
+
+  return [...featured, ...newest.filter((product) => !featuredIds.has(product.id))].slice(0, SELECTION_SIZE);
+}
+
 export default async function HomePage() {
-  const [featured, categories, brands, catalog] = await Promise.all([
-    getProducts({ featured: true, per_page: 8 }),
+  const [featured, newest, categories, brands, zones] = await Promise.all([
+    getProducts({ featured: true, per_page: SELECTION_SIZE }),
+    getProducts({ sort: 'newest', per_page: SELECTION_SIZE * 2 }),
     getCategories(),
     getBrands(),
-    // No dedicated "on sale" or "date added" filter is exposed by the public
-    // API — but sort=newest already orders by created_at server-side
-    // (ProductController@index), the same real field the catalogue's own
-    // "Plus récents" sort option already relies on. One fetch covers both
-    // Nouveautés and Promotions below by slicing/filtering that real data,
-    // rather than adding a new endpoint or inventing a "freshness" heuristic.
-    getProducts({ sort: 'newest', per_page: 100 }),
+    // getDeliveryZones() lève en cas d'erreur (le checkout gère l'erreur
+    // lui-même) ; ici, une panne d'API masque simplement les zones.
+    withFallback<DeliveryZone[]>('GET /delivery-zones', [], () => getDeliveryZones()),
   ]);
 
-  const shoppableCategories = categories.filter((category) => (category.children ?? []).length === 0);
-  const newest = catalog.data.slice(0, 8);
-  const promotions = catalog.data
-    .filter((product) => isDiscounted(product.price, product.compare_at_price))
-    .slice(0, 8);
-
   return (
-    <div>
-      <Hero showNouveautesCta={newest.length > 0} />
-
-      <section className="mx-auto max-w-6xl px-4 py-12 sm:px-6">
-        <h2 className="font-display text-xl font-semibold text-ink sm:text-2xl">Nos catégories</h2>
-        {shoppableCategories.length === 0 ? (
-          <EmptyState title="Aucune catégorie disponible pour le moment" />
-        ) : (
-          <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
-            {shoppableCategories.map((category) => (
-              <Link
-                key={category.id}
-                href={`/categories/${category.slug}`}
-                className="rounded-xl border border-border bg-surface-raised px-4 py-6 text-center text-sm font-medium text-ink transition-colors hover:border-brand-400 hover:bg-brand-50"
-              >
-                {category.name}
-              </Link>
-            ))}
-          </div>
-        )}
-      </section>
-
+    <div className="pb-2">
+      <Hero brandCount={brands.filter(isRealBrand).length} />
+      <ReassuranceSection zones={zones} />
+      <CategoryGrid categories={categories} />
       <ProductSection
-        title="Mis en avant"
-        description="Une sélection de produits que nous aimons particulièrement."
-        viewAllHref="/produits?featured=1"
-        products={featured.data}
-      />
-
-      <ProductSection
-        title="Promotions"
-        description="Prix réduits, pour une durée limitée."
+        id="selection"
+        eyebrow="Notre sélection"
+        title="Nos produits du moment"
         viewAllHref="/produits"
-        products={promotions}
+        products={buildSelection(featured.data, newest.data)}
       />
-
-      <ProductSection
-        id="nouveautes"
-        title="Nouveautés"
-        description="Les derniers produits arrivés dans notre catalogue."
-        viewAllHref="/produits?sort=newest"
-        products={newest}
-      />
-
       <BrandsShowcase brands={brands} />
-
-      <ReassuranceSection />
+      <PharmacistAdvice />
+      <DeliveryZonesSection zones={zones} />
     </div>
   );
 }

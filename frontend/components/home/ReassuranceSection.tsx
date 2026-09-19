@@ -1,59 +1,98 @@
-const ITEMS = [
-  {
-    title: 'Paiement flexible',
-    description: 'Réglez à la livraison, en boutique, ou en ligne avec Wave.',
-    icon: (
-      <svg aria-hidden="true" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.5" className="h-5 w-5">
-        <rect x="2.5" y="5" width="15" height="10" rx="1.5" />
-        <path d="M2.5 8.5h15" strokeLinecap="round" />
-      </svg>
-    ),
-  },
-  {
-    title: 'Retrait ou livraison',
-    description: 'Choisissez de récupérer votre commande en boutique ou de vous faire livrer.',
-    icon: (
-      <svg aria-hidden="true" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.5" className="h-5 w-5">
-        <path d="M3 8l1.2-4h11.6L17 8" strokeLinecap="round" strokeLinejoin="round" />
-        <path d="M3.5 8h13v7.5a1 1 0 0 1-1 1h-11a1 1 0 0 1-1-1V8Z" strokeLinejoin="round" />
-        <path d="M8 9.5v3.5h4V9.5" strokeLinejoin="round" />
-      </svg>
-    ),
-  },
-  {
-    title: 'Suivi de commande',
-    description: "Suivez l'état de votre commande en ligne, à tout moment, avec votre numéro de commande.",
-    icon: (
-      <svg aria-hidden="true" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.5" className="h-5 w-5">
-        <circle cx="10" cy="10" r="7" />
-        <path d="M10 6v4l2.5 2" strokeLinecap="round" strokeLinejoin="round" />
-      </svg>
-    ),
-  },
-];
+import type { ReactNode } from 'react';
+import type { DeliveryZone } from '@/lib/api/types';
+import { formatPrice } from '@/lib/utils/format';
+
+const iconProps = {
+  'aria-hidden': true,
+  viewBox: '0 0 24 24',
+  fill: 'none',
+  stroke: 'currentColor',
+  strokeWidth: 1.6,
+  strokeLinecap: 'round',
+  strokeLinejoin: 'round',
+  className: 'h-[21px] w-[21px] shrink-0 text-vert lg:h-6 lg:w-6',
+} as const;
+
+/** Tarif de livraison le plus bas, issu des zones réelles de l'API. */
+function cheapestZone(zones: DeliveryZone[]): DeliveryZone | null {
+  return zones.reduce<DeliveryZone | null>(
+    (best, zone) => (best === null || Number.parseFloat(zone.fee) < Number.parseFloat(best.fee) ? zone : best),
+    null,
+  );
+}
 
 /**
- * Same three factual capabilities as ReassuranceBar (sitewide top strip),
- * presented with more visual weight as a closing block before the footer.
- * Deliberately no rating, review count, "100% authentique", delivery
- * timing, or return-policy claim — none of that exists in the data model.
+ * Bandeau de confiance en 4 points (DESIGN.md §3). Uniquement des faits
+ * confirmés : la parapharmacie dépend d'une officine agréée à Tambacounda ;
+ * paiements (OrderService::PAYMENT_METHODS) ; tarifs de livraison lus dans
+ * l'API ; conseil par WhatsApp. Pas de « jours fixes par zone » ni de
+ * « réponse gratuite » : ces promesses ne sont pas encore tenues.
+ * Sur mobile, seuls les titres courts s'affichent.
  */
-export function ReassuranceSection() {
+export function ReassuranceSection({ zones }: { zones: DeliveryZone[] }) {
+  const cheapest = cheapestZone(zones);
+
+  const items: Array<{ title: string; short: string; detail: string; icon: ReactNode }> = [
+    {
+      title: 'Pharmacie agréée',
+      short: 'Pharmacie agréée',
+      detail: 'Officine à Tambacounda',
+      icon: (
+        <svg {...iconProps}>
+          <path d="M12 3l7 3v5.5c0 4.3-2.9 8.2-7 9.5-4.1-1.3-7-5.2-7-9.5V6z" />
+        </svg>
+      ),
+    },
+    {
+      title: 'Livraison dans la région',
+      short: 'Livraison région',
+      detail: cheapest ? `Dès ${formatPrice(cheapest.fee)}` : 'Tambacounda et alentours',
+      icon: (
+        <svg {...iconProps}>
+          <rect x="1.5" y="6.5" width="13" height="10" rx="1.6" />
+          <path d="M14.5 10h3.6l2.9 3.1v3.4h-6.5z" />
+          <circle cx="6" cy="18.3" r="1.8" />
+          <circle cx="17" cy="18.3" r="1.8" />
+        </svg>
+      ),
+    },
+    {
+      title: 'Payez à la livraison',
+      short: 'Payez à la livraison',
+      detail: 'Ou en ligne par Wave',
+      icon: (
+        <svg {...iconProps}>
+          <rect x="2.5" y="5.5" width="19" height="13" rx="2.2" />
+          <path d="M2.5 10h19" />
+        </svg>
+      ),
+    },
+    {
+      title: 'Conseil du pharmacien',
+      short: 'Conseil pharmacien',
+      detail: "Par WhatsApp, avant l'achat",
+      icon: (
+        <svg {...iconProps}>
+          <path d="M4 5h16v11H9l-5 4z" />
+        </svg>
+      ),
+    },
+  ];
+
   return (
-    <section className="border-y border-border bg-brand-50">
-      <div className="mx-auto max-w-6xl px-4 py-12 sm:px-6">
-        <div className="grid grid-cols-1 gap-8 sm:grid-cols-3">
-          {ITEMS.map((item) => (
-            <div key={item.title} className="flex flex-col items-start gap-3">
-              <span className="flex h-11 w-11 items-center justify-center rounded-full bg-surface-raised text-brand-700">
-                {item.icon}
-              </span>
-              <h3 className="text-base font-semibold text-ink">{item.title}</h3>
-              <p className="text-sm text-ink-muted">{item.description}</p>
+    <section aria-label="Nos engagements" className="border-y border-bordure bg-blanc">
+      <ul className="mx-auto grid max-w-[1440px] grid-cols-2 gap-[18px] px-5 py-5 sm:px-8 lg:grid-cols-4 lg:gap-6 lg:px-16 lg:py-[38px]">
+        {items.map((item) => (
+          <li key={item.title} className="flex items-center gap-2.5 lg:gap-3.5">
+            {item.icon}
+            <div className="flex flex-col gap-[3px]">
+              <span className="text-[13px] font-semibold leading-tight text-encre lg:hidden">{item.short}</span>
+              <span className="hidden text-[14.5px] font-semibold text-encre lg:inline">{item.title}</span>
+              <span className="hidden text-[12.5px] text-texte-discret lg:inline">{item.detail}</span>
             </div>
-          ))}
-        </div>
-      </div>
+          </li>
+        ))}
+      </ul>
     </section>
   );
 }

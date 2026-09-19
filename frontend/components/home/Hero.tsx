@@ -1,64 +1,103 @@
+import Image from 'next/image';
 import Link from 'next/link';
-import { Button } from '@/components/ui/Button';
+import { CTA } from '@/components/ui/cta';
+import { WhatsAppIcon } from '@/components/ui/icons';
+import { hasWhatsApp, whatsappHref } from '@/lib/config/contact';
+
+const ORDER_MESSAGE = 'Bonjour, je souhaite passer une commande auprès de la Parapharmacie THIAALA.';
+const QUESTION_MESSAGE = "Bonjour, j'ai une question sur un produit avant de commander.";
 
 /**
- * No real hero photography exists yet — the seeded catalogue has zero
- * product images (see ProductImagePlaceholder's own doc comment). Rather
- * than fabricate a photo, this reuses the exact same droplet motif already
- * established as this brand's placeholder iconography, layered at a few
- * sizes/opacities into a soft, abstract composition. A real, already-shipped
- * asset — not an invented image.
+ * « Plus de 100 marques » — arrondi à la dizaine inférieure à partir du
+ * nombre réel de marques du catalogue, pour que l'accroche reste vraie
+ * quand le catalogue évolue. Rien en dessous de 20 : l'argument ne porte plus.
  */
-function HeroGraphic() {
-  const droplet = 'M17 4h6v6.2c0 .8.3 1.6.9 2.2l6.4 6.6c1.8 1.9 2.7 4.4 2.7 7V30a6 6 0 0 1-6 6H13a6 6 0 0 1-6-6v-3.9c0-2.7.9-5.2 2.7-7.1l6.4-6.6c.6-.6.9-1.4.9-2.2V4Z';
+function brandCountClaim(brandCount: number): string | null {
+  if (brandCount < 20) return null;
 
+  return `Plus de ${Math.floor(brandCount / 10) * 10} marques`;
+}
+
+/**
+ * Visuel du héro. Aucune photo réelle n'existe encore (devanture ou
+ * produits phares, DESIGN.md §5) : plutôt qu'une image inventée, le
+ * pictogramme doré du logo sur le fond des visuels produits. Le jour où la
+ * photo existe, elle remplace ce bloc sans toucher au reste.
+ */
+function HeroVisual() {
   return (
-    <div className="relative hidden aspect-square w-full max-w-md items-center justify-center lg:flex" aria-hidden="true">
-      <div className="absolute h-full w-full rounded-full bg-accent-100/60" />
-      <div className="absolute h-4/5 w-4/5 rounded-full bg-brand-50" />
-      <svg viewBox="0 0 40 40" className="absolute left-8 top-12 h-16 w-16 text-brand-200" fill="none">
-        <path d={droplet} stroke="currentColor" strokeWidth="2" strokeLinejoin="round" />
-      </svg>
-      <svg viewBox="0 0 40 40" className="relative h-1/2 w-1/2 text-brand-600" fill="none">
-        <path d={droplet} stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" />
-        <path d="M12 24h16" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-      </svg>
-      <svg viewBox="0 0 40 40" className="absolute bottom-10 right-10 h-12 w-12 text-accent-600" fill="none">
-        <path d={droplet} stroke="currentColor" strokeWidth="2" strokeLinejoin="round" />
-      </svg>
+    <div className="relative">
+      <div className="flex h-[190px] items-center justify-center rounded-[18px] border border-bordure bg-ivoire-fonce sm:h-[300px] lg:h-[440px] lg:rounded-[24px]">
+        <Image
+          src="/logo-icon.png"
+          alt=""
+          width={288}
+          height={214}
+          priority
+          className="h-auto w-[112px] sm:w-[170px] lg:w-[220px]"
+        />
+      </div>
+
+      {/* Carte flottante « Conseil du pharmacien » : à partir de xl (en dessous,
+          la colonne du visuel est trop étroite et la carte le masque) ; sur
+          mobile, le bloc conseil plus bas joue ce rôle. */}
+      <a
+        href={whatsappHref(QUESTION_MESSAGE)}
+        {...(hasWhatsApp() ? { target: '_blank', rel: 'noopener noreferrer' } : {})}
+        className="absolute -left-10 bottom-9 hidden w-[292px] flex-col gap-[7px] rounded-2xl border border-bordure bg-blanc px-[22px] py-5 shadow-[0_12px_30px_rgba(18,59,46,0.08)] transition-colors hover:border-bordure-forte xl:flex"
+      >
+        <span className="text-[11px] font-semibold uppercase tracking-[0.18em] text-or">Conseil du pharmacien</span>
+        <span className="font-display text-lg leading-snug text-encre">Une question sur un produit&nbsp;?</span>
+        <span className="text-[13.5px] leading-normal text-texte-discret">Écrivez-nous, on vous répond avant l&apos;achat.</span>
+      </a>
     </div>
   );
 }
 
-export function Hero({ showNouveautesCta = false }: { showNouveautesCta?: boolean }) {
-  return (
-    <section className="border-b border-border bg-brand-600">
-      <div className="mx-auto grid max-w-6xl items-center gap-10 px-4 py-16 sm:px-6 sm:py-20 lg:grid-cols-2 lg:py-24">
-        <div>
-          <p className="text-sm font-medium uppercase tracking-wide text-brand-100">Santé • Beauté • Bien-être</p>
-          <h1 className="mt-3 max-w-xl font-display text-4xl font-semibold text-white sm:text-5xl">
-            Des soins sélectionnés avec soin, pour tout le Sénégal.
-          </h1>
-          <p className="mt-4 max-w-lg text-brand-50">
-            Visage, corps, cheveux et hygiène — découvrez le catalogue Parapharmacie THIAALA.
-          </p>
+export function Hero({ brandCount }: { brandCount: number }) {
+  const claim = brandCountClaim(brandCount);
 
-          <div className="mt-8 flex flex-wrap items-center gap-3">
-            <Button href="/produits" variant="secondary" size="lg">
-              Voir le catalogue
-            </Button>
-            {showNouveautesCta && (
-              <Link
-                href="#nouveautes"
-                className="inline-flex items-center justify-center gap-2 rounded-full border border-white/40 px-6 py-3 text-sm font-medium text-white transition-colors hover:bg-white/10"
-              >
-                Voir les nouveautés
-              </Link>
-            )}
-          </div>
+  return (
+    <section className="mx-auto max-w-[1440px] px-5 pb-[34px] pt-[30px] sm:px-8 lg:px-16 lg:py-20">
+      <div className="grid gap-[18px] lg:grid-cols-[minmax(0,570px)_minmax(0,1fr)] lg:grid-rows-[auto_auto_auto] lg:items-center lg:gap-x-[72px] lg:gap-y-8">
+        <div className="flex flex-col gap-[18px] lg:gap-[26px] lg:self-end">
+          <p className="surtitre text-[10.5px] tracking-[0.2em] text-or lg:text-[12.5px] lg:tracking-[0.22em]">
+            Parapharmacie THIAALA · Tambacounda
+          </p>
+          <h1 className="font-titre text-[38px] leading-[1.08] text-vert sm:text-5xl lg:text-[62px] lg:leading-[1.06]">
+            Les soins de votre pharmacie, livrés chez vous.
+          </h1>
+          <p className="max-w-[480px] text-[15px] leading-relaxed text-texte-doux lg:text-[17.5px] lg:leading-[1.65]">
+            {claim ? `${claim} de soin — ` : ''}visage, corps, cheveux, bébé, hygiène. Commandez en ligne, recevez
+            votre commande à Tambacounda et dans toute la région.
+          </p>
         </div>
 
-        <HeroGraphic />
+        <div className="lg:col-start-2 lg:row-span-3 lg:row-start-1">
+          <HeroVisual />
+        </div>
+
+        <div className="flex flex-col gap-2.5 sm:flex-row sm:items-center sm:gap-3.5 lg:self-start">
+          <Link href="/produits" className={CTA.primary}>
+            Découvrir le catalogue
+          </Link>
+          <a
+            href={whatsappHref(ORDER_MESSAGE)}
+            {...(hasWhatsApp() ? { target: '_blank', rel: 'noopener noreferrer' } : {})}
+            className={CTA.secondary}
+          >
+            <WhatsAppIcon className="h-[18px] w-[18px]" />
+            Commander sur WhatsApp
+          </a>
+        </div>
+
+        <p className="flex items-start gap-2.5 text-[13px] leading-snug text-texte-discret lg:-mt-4 lg:items-center lg:text-[13.5px]">
+          <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4 shrink-0">
+            <path d="M12 3l7 3v5.5c0 4.3-2.9 8.2-7 9.5-4.1-1.3-7-5.2-7-9.5V6z" />
+            <path d="M9.2 12.2l2 2 3.6-3.9" />
+          </svg>
+          Produits authentiques, issus des circuits pharmaceutiques officiels
+        </p>
       </div>
     </section>
   );
