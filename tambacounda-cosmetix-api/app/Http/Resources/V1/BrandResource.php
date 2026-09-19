@@ -18,6 +18,8 @@ class BrandResource extends JsonResource
             'description' => $this->description,
             'website' => $this->website,
             'logo_url' => $this->logo ? app(StorageService::class)->url($this->logo) : null,
+            // Only on the list/detail endpoints that compute it (not when nested in a product).
+            'products_count' => $this->whenHas('products_count', fn ($count) => (int) $count),
         ];
     }
 }

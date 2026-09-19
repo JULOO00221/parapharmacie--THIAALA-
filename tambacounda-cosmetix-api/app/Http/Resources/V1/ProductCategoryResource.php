@@ -17,6 +17,8 @@ class ProductCategoryResource extends JsonResource
             'slug' => $this->slug,
             'description' => $this->description,
             'image_url' => $this->image ? app(StorageService::class)->url($this->image) : null,
+            // Only on the list/detail endpoints that compute it (not when nested in a product).
+            'products_count' => $this->whenHas('products_count', fn ($count) => (int) $count),
             'parent' => $this->whenLoaded('parent', fn () => $this->parent ? [
                 'id' => $this->parent->id,
                 'name' => $this->parent->name,
