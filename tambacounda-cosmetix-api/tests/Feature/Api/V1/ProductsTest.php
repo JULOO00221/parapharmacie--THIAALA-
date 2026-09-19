@@ -9,6 +9,7 @@ use App\Models\Store;
 use App\Models\Tag;
 use App\Services\ProductService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
 
 class ProductsTest extends TestCase
@@ -72,6 +73,96 @@ class ProductsTest extends TestCase
         $response = $this->getJson('/api/v1/products?category='.$this->category->slug);
 
         $this->assertSame(1, $response->json('meta.total'));
+    }
+
+    public function test_category_filter_includes_products_of_child_categories(): void
+    {
+        $serums = ProductCategory::factory()->create(['parent_id' => $this->category->id]);
+        $cremes = ProductCategory::factory()->create(['parent_id' => $this->category->id]);
+        $unrelated = ProductCategory::factory()->create();
+
+        $direct = Product::factory()->create(['category_id' => $this->category->id]);
+        $serum = Product::factory()->create(['category_id' => $serums->id]);
+        $creme = Product::factory()->create(['category_id' => $cremes->id]);
+        Product::factory()->create(['category_id' => $unrelated->id]);
+
+        $response = $this->getJson('/api/v1/products?category='.$this->category->slug);
+
+        $response->assertOk();
+        $this->assertEqualsCanonicalizing(
+            [$direct->id, $serum->id, $creme->id],
+            array_column($response->json('data'), 'id'),
+        );
+
+        // A child category still only returns its own products.
+        $this->getJson('/api/v1/products?category='.$serums->slug)
+            ->assertOk()
+            ->assertJsonPath('meta.total', 1)
+            ->assertJsonPath('data.0.id', $serum->id);
+    }
+
+    public function test_category_filter_includes_products_two_levels_down(): void
+    {
+        $visage = ProductCategory::factory()->create(['parent_id' => $this->category->id]);
+        $contourDesYeux = ProductCategory::factory()->create(['parent_id' => $visage->id]);
+        $sibling = ProductCategory::factory()->create(['parent_id' => $this->category->id]);
+
+        $atRoot = Product::factory()->create(['category_id' => $this->category->id]);
+        $atMiddle = Product::factory()->create(['category_id' => $visage->id]);
+        $atLeaf = Product::factory()->create(['category_id' => $contourDesYeux->id]);
+        $inSibling = Product::factory()->create(['category_id' => $sibling->id]);
+
+        $idsFor = fn (ProductCategory $category) => array_column(
+            $this->getJson('/api/v1/products?category='.$category->slug)->assertOk()->json('data'),
+            'id',
+        );
+
+        $this->assertEqualsCanonicalizing([$atRoot->id, $atMiddle->id, $atLeaf->id, $inSibling->id], $idsFor($this->category));
+        $this->assertEqualsCanonicalizing([$atMiddle->id, $atLeaf->id], $idsFor($visage));
+        $this->assertEqualsCanonicalizing([$atLeaf->id], $idsFor($contourDesYeux));
+    }
+
+    public function test_category_filter_query_count_does_not_grow_with_the_tree(): void
+    {
+        // Flat: one category, no children.
+        $flat = ProductCategory::factory()->create();
+        Product::factory()->create(['category_id' => $flat->id]);
+
+        // Deep: 3 children, each with 3 grandchildren, a product at every node.
+        $deep = ProductCategory::factory()->create();
+        Product::factory()->create(['category_id' => $deep->id]);
+        foreach (range(1, 3) as $i) {
+            $child = ProductCategory::factory()->create(['parent_id' => $deep->id]);
+            Product::factory()->create(['category_id' => $child->id]);
+            foreach (range(1, 3) as $j) {
+                $grandchild = ProductCategory::factory()->create(['parent_id' => $child->id]);
+                Product::factory()->create(['category_id' => $grandchild->id]);
+            }
+        }
+
+        $countQueries = function (ProductCategory $category, int $expectedTotal): int {
+            DB::flushQueryLog();
+            DB::enableQueryLog();
+            $this->getJson('/api/v1/products?category='.$category->slug)
+                ->assertOk()
+                ->assertJsonPath('meta.total', $expectedTotal);
+            DB::disableQueryLog();
+
+            $categoryLookups = array_filter(
+                DB::getQueryLog(),
+                fn (array $entry) => str_contains($entry['query'], 'product_categories')
+                    && ! str_contains($entry['query'], 'WITH RECURSIVE')
+                    && ! str_contains($entry['query'], '"product_categories"."id" in'),
+            );
+            $this->assertSame([], array_values($categoryLookups), 'The category tree must not be resolved by separate queries.');
+
+            return count(DB::getQueryLog());
+        };
+
+        $flatQueries = $countQueries($flat, 1);
+        $deepQueries = $countQueries($deep, 13);
+
+        $this->assertSame($flatQueries, $deepQueries);
     }
 
     public function test_filters_by_brand_slug(): void

@@ -31,7 +31,9 @@ class ProductController extends Controller
         }
 
         if (! empty($filters['category'])) {
-            $query->whereHas('category', fn (Builder $query) => $query->where('slug', $filters['category']));
+            // Includes subcategories at any depth: a parent category (e.g.
+            // "Soins du visage") holds no product directly.
+            $query->inCategoryTree($filters['category']);
         }
 
         if (! empty($filters['brand'])) {

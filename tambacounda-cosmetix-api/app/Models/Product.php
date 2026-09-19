@@ -3,6 +3,8 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Attributes\Fillable;
+use Illuminate\Database\Eloquent\Attributes\Scope;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -52,6 +54,32 @@ class Product extends Model
     public function category(): BelongsTo
     {
         return $this->belongsTo(ProductCategory::class, 'category_id');
+    }
+
+    /**
+     * Products of the category identified by $slug or of any of its
+     * descendants, at any depth.
+     *
+     * The whole tree is resolved inside the product query by a recursive
+     * CTE, so filtering costs no extra query whatever the number of
+     * subcategories or levels. UNION (not UNION ALL) deduplicates visited
+     * ids, which also stops the recursion if parent_id ever forms a cycle.
+     */
+    #[Scope]
+    protected function inCategoryTree(Builder $query, string $slug): void
+    {
+        $query->whereRaw(
+            'category_id IN (
+                WITH RECURSIVE category_tree AS (
+                    SELECT id FROM product_categories WHERE slug = ?
+                    UNION
+                    SELECT child.id FROM product_categories child
+                    INNER JOIN category_tree parent ON child.parent_id = parent.id
+                )
+                SELECT id FROM category_tree
+            )',
+            [$slug],
+        );
     }
 
     public function brand(): BelongsTo
