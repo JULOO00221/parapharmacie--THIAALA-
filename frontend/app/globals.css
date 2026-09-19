@@ -1,60 +1,89 @@
 @import "tailwindcss";
 
 /*
- * Parapharmacie THIAALA storefront identity.
- * Vert + doré + blanc, inspired by the THIAALA logo. Kept as a deliberate,
- * three-tier hierarchy rather than a flat brand-color swap:
- *   - brand (deep forest green): identity and primary action — unchanged
- *     from the pre-rebrand palette, since it already reads as "vert" and
- *     is deployed across the entire storefront (buttons, links, header/
- *     footer, checkout). The Filament back-office's amber stays a
- *     separate, admin-tool-only choice, untouched by this palette.
- *   - accent (doré/gold, was terracotta/clay pre-rebrand): the brand's
- *     secondary accent — CTAs, "mis en avant", highlights. Reserved for
- *     backgrounds/icons/badges, never body text on a light surface: gold
- *     on white only reaches ~3.25:1 contrast, below the 4.5:1 WCAG AA
- *     text threshold (though above the 3:1 large-text/UI-component one).
- *   - promo (deep bissap/hibiscus red): reserved ONLY for real discounts
- *     (compare_at_price present) — deliberately kept independent of the
- *     brand palette so a promotion never reads as "just another gold
- *     highlight" and never collides with accent ("mis en avant") or with
- *     danger (errors/alerts). #9c1f4e on white is a 7.7:1 contrast ratio
- *     (WCAG AAA for normal text), and #9c1f4e on --color-promo-100 is
- *     5.7:1 (WCAG AA). Named after bissap (hibiscus tea), a Senegalese
- *     staple — not copied from any reference site's palette.
- *   - warm off-white surfaces instead of clinical pure white.
+ * Parapharmacie THIAALA — design tokens (source of truth: DESIGN.md §1).
+ *
+ * Épuré et premium : beaucoup de blanc, peu de couleurs, pas de dégradés ni
+ * d'ombres lourdes. Palette tirée du logo.
+ *
+ * Ne pas confondre `or` et `or-clair` : l'or du logo est trop pâle pour du
+ * petit texte sur fond ivoire (< 4,5:1). `or` (#8A5E1C) sert sur fond clair,
+ * `or-clair` (#E0B571) uniquement sur fond vert.
  */
 :root {
-  --color-brand-50: #eef5f1;
-  --color-brand-100: #d6e8df;
-  --color-brand-200: #adcfbf;
+  --color-vert: #0f5132;
+  --color-vert-clair: #1d8a4e;
+  --color-vert-stock: #16693f;
+  --color-or: #8a5e1c;
+  --color-or-clair: #e0b571;
+  --color-ivoire: #f7f4ef;
+  --color-blanc: #ffffff;
+  --color-ivoire-fonce: #edeae2;
+  --color-bordure: #e3dcd1;
+  --color-bordure-forte: #cfc6b8;
+  --color-encre: #14201b;
+  --color-texte-doux: #47544d;
+  --color-texte-discret: #5f6b64;
+
+  /* Texte sur fond vert (pied de page, bandeaux). #D5DFD8 sur vert : 6,9:1.
+     #A9BCB1 sur vert : 4,7:1 — éclairci par rapport au #9BB0A4 des maquettes,
+     qui plafonnait à 4,1:1. */
+  --color-sur-vert: #d5dfd8;
+  --color-sur-vert-discret: #a9bcb1;
+
+  /*
+   * Anciens tokens, conservés tant que les pages ne sont pas refaites.
+   * Ils pointent désormais vers la nouvelle palette pour que tout le site
+   * bascule d'un coup, sans toucher aux pages. À supprimer au fil de la
+   * refonte, page par page.
+   */
+  --color-brand-50: #eef3ef;
+  --color-brand-100: #d6e4db;
+  --color-brand-200: #adc9b8;
   --color-brand-400: #4d8a6c;
-  --color-brand-600: #1f4d3a;
-  --color-brand-700: #173a2b;
-  --color-brand-900: #0d211a;
+  --color-brand-600: var(--color-vert);
+  --color-brand-700: #0b3d26;
+  --color-brand-900: var(--color-vert);
 
-  --color-accent-100: #e8d2a0;
-  --color-accent-400: #d1ae55;
-  --color-accent-600: #b8860b;
-  --color-accent-700: #8c6a08;
+  --color-accent-100: #f1e3c8;
+  --color-accent-400: var(--color-or-clair);
+  --color-accent-600: var(--color-or);
+  --color-accent-700: #6e4b16;
 
+  /* Promo (bissap) : réservé aux vraies remises (compare_at_price). */
   --color-promo-50: #fbeaf1;
   --color-promo-100: #f5d6e3;
   --color-promo-600: #9c1f4e;
   --color-promo-700: #7a1840;
 
-  --color-surface: #fbf9f6;
-  --color-surface-raised: #ffffff;
-  --color-ink: #1c1b19;
-  --color-ink-muted: #6b6560;
-  --color-border: #e7e2db;
+  --color-surface: var(--color-ivoire);
+  --color-surface-raised: var(--color-blanc);
+  --color-ink: var(--color-encre);
+  --color-ink-muted: var(--color-texte-discret);
+  --color-border: var(--color-bordure);
 
-  --color-success: #1f7a4a;
-  --color-warning: #b3690a;
+  --color-success: var(--color-vert-stock);
+  --color-warning: #9a5a08; /* 5,4:1 sur blanc (l’ancien #b3690a plafonnait à 4,3:1) */
   --color-danger: #b5342a;
 }
 
 @theme inline {
+  --color-vert: var(--color-vert);
+  --color-vert-clair: var(--color-vert-clair);
+  --color-vert-stock: var(--color-vert-stock);
+  --color-or: var(--color-or);
+  --color-or-clair: var(--color-or-clair);
+  --color-ivoire: var(--color-ivoire);
+  --color-blanc: var(--color-blanc);
+  --color-ivoire-fonce: var(--color-ivoire-fonce);
+  --color-bordure: var(--color-bordure);
+  --color-bordure-forte: var(--color-bordure-forte);
+  --color-encre: var(--color-encre);
+  --color-texte-doux: var(--color-texte-doux);
+  --color-texte-discret: var(--color-texte-discret);
+  --color-sur-vert: var(--color-sur-vert);
+  --color-sur-vert-discret: var(--color-sur-vert-discret);
+
   --color-brand-50: var(--color-brand-50);
   --color-brand-100: var(--color-brand-100);
   --color-brand-200: var(--color-brand-200);
@@ -83,14 +112,32 @@
   --color-warning: var(--color-warning);
   --color-danger: var(--color-danger);
 
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-  /* Reserved for H1/hero and major section headings only — see layout.tsx.
-     Everything else (body copy, UI, buttons) stays on --font-sans. */
-  --font-display: var(--font-fraunces);
+  /* Polices chargées par next/font/google dans app/layout.tsx. */
+  --font-sans: var(--font-work-sans), "Helvetica Neue", Arial, sans-serif;
+  --font-display: var(--font-fraunces), Georgia, serif;
+
+  /* Formes (DESIGN.md §1 « Formes »). */
+  --radius-carte: 18px;
+  --radius-carte-mobile: 14px;
+  --radius-bloc: 24px;
+}
+
+/* Titre Fraunces : poids 600, letter-spacing -0.015em. */
+@utility font-titre {
+  font-family: var(--font-display);
+  font-weight: 600;
+  letter-spacing: -0.015em;
+}
+
+/* Surtitre : petites capitales espacées (or sur clair, or-clair sur vert). */
+@utility surtitre {
+  font-size: 12.5px;
+  font-weight: 600;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
 }
 
 body {
-  background: var(--color-surface);
-  color: var(--color-ink);
+  background: var(--color-ivoire);
+  color: var(--color-encre);
 }

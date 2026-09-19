@@ -35,14 +35,14 @@ export function CategoryLinks({
     <div className={className}>
       {[...groups.entries()].map(([groupName, items]) => (
         <div key={groupName} className="mb-4 last:mb-0">
-          <p className="mb-1.5 text-xs font-semibold uppercase tracking-wide text-ink-muted">{groupName}</p>
+          <p className="mb-1 px-2 text-[11px] font-semibold uppercase tracking-[0.16em] text-texte-discret">{groupName}</p>
           <ul className="space-y-0.5">
             {items.map((item) => (
               <li key={item.id}>
                 <Link
                   href={`/categories/${item.slug}`}
                   onClick={onNavigate}
-                  className="block rounded-lg px-2 py-1.5 text-sm text-ink hover:bg-brand-50 hover:text-brand-700"
+                  className="flex min-h-10 items-center rounded-lg px-2 text-sm text-encre hover:bg-ivoire hover:text-vert"
                 >
                   {item.name}
                 </Link>

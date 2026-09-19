@@ -2,14 +2,15 @@
 
 import { useState } from 'react';
 import type { MouseEvent } from 'react';
-import { Button } from '@/components/ui/Button';
+import { CheckIcon, PlusIcon } from '@/components/ui/icons';
 import type { Product } from '@/lib/api/types';
+import { cn } from '@/lib/utils/cn';
 import { useCart } from './CartProvider';
 
 /**
- * Used on ProductCard, which is itself an entire <Link> to the product
- * page — this button lives inside that link, so its click must never
- * bubble into a navigation.
+ * Bouton rond « + » de ProductCard (DESIGN.md §2). Il est posé au-dessus du
+ * lien étiré de la carte : son clic ne doit jamais déclencher la navigation
+ * vers la fiche produit.
  */
 export function AddToCartButton({ product, className }: { product: Product; className?: string }) {
   const { addItem } = useCart();
@@ -35,16 +36,26 @@ export function AddToCartButton({ product, className }: { product: Product; clas
   }
 
   return (
-    <Button
+    <button
       type="button"
-      variant={justAdded ? 'secondary' : 'primary'}
-      size="sm"
       onClick={handleClick}
       disabled={!product.available}
-      aria-label={product.available ? `Ajouter ${product.name} au panier` : `${product.name} indisponible`}
-      className={className}
+      aria-label={
+        justAdded
+          ? `${product.name} ajouté au panier`
+          : product.available
+            ? `Ajouter ${product.name} au panier`
+            : `${product.name} indisponible`
+      }
+      className={cn(
+        'flex h-11 w-11 shrink-0 items-center justify-center rounded-full border transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-vert disabled:cursor-not-allowed disabled:opacity-40',
+        justAdded
+          ? 'border-vert bg-vert text-white'
+          : 'border-bordure-forte bg-ivoire text-vert hover:border-vert hover:bg-vert hover:text-white',
+        className,
+      )}
     >
-      {justAdded ? 'Ajouté ✓' : 'Ajouter au panier'}
-    </Button>
+      {justAdded ? <CheckIcon className="h-[18px] w-[18px]" /> : <PlusIcon className="h-[19px] w-[19px]" />}
+    </button>
   );
 }

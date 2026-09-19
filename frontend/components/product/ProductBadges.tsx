@@ -12,10 +12,10 @@ export function ProductBadges({ featured, percentOff }: { featured: boolean; per
   return (
     <div className="absolute inset-x-3 top-3 flex items-start gap-2">
       {featured && (
-        <span className="rounded-full bg-accent-600 px-2.5 py-1 text-xs font-medium text-white">Mis en avant</span>
+        <span className="rounded-full bg-vert px-2.5 py-1 text-[11px] font-semibold tracking-[0.02em] text-white">Mis en avant</span>
       )}
       {percentOff !== null && (
-        <span className="ml-auto rounded-full bg-promo-600 px-2.5 py-1 text-xs font-semibold text-white">
+        <span className="ml-auto rounded-full bg-promo-600 px-2.5 py-1 text-[11px] font-semibold text-white">
           −{percentOff}%
         </span>
       )}

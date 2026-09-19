@@ -17,7 +17,7 @@ export function BrandLinks({
           <Link
             href={`/marques/${brand.slug}`}
             onClick={onNavigate}
-            className="block rounded-lg px-2 py-1.5 text-sm text-ink hover:bg-brand-50 hover:text-brand-700"
+            className="flex min-h-10 items-center rounded-lg px-2 text-sm text-encre hover:bg-ivoire hover:text-vert"
           >
             {brand.name}
           </Link>

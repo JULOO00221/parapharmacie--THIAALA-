@@ -1,12 +1,16 @@
 'use client';
 
 import { useRouter, useSearchParams } from 'next/navigation';
-import { useState, type FormEvent } from 'react';
+import { useId, useState, type FormEvent } from 'react';
+import { SearchIcon } from '@/components/ui/icons';
 
 export function SearchBar({ className }: { className?: string }) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [value, setValue] = useState(searchParams.get('q') ?? '');
+  // Rendue deux fois (en-tête desktop + ligne mobile) : id unique par instance.
+  // Texte à 16px sous xl : en dessous, iOS zoome la page au focus.
+  const inputId = useId();
 
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -21,29 +25,19 @@ export function SearchBar({ className }: { className?: string }) {
 
   return (
     <form onSubmit={handleSubmit} className={className} role="search">
-      <label htmlFor="storefront-search" className="sr-only">
+      <label htmlFor={inputId} className="sr-only">
         Rechercher un produit
       </label>
-      <div className="flex items-center gap-2 rounded-full border border-border bg-surface-raised px-4 py-2.5 focus-within:border-brand-400">
-        <svg
-          aria-hidden="true"
-          viewBox="0 0 20 20"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="1.7"
-          className="h-5 w-5 shrink-0 text-ink-muted"
-        >
-          <circle cx="9" cy="9" r="6.5" />
-          <path d="m17.5 17.5-4-4" strokeLinecap="round" />
-        </svg>
+      <div className="flex h-[46px] items-center gap-2.5 rounded-full border border-bordure bg-ivoire px-4 focus-within:border-vert">
+        <SearchIcon className="h-[17px] w-[17px] shrink-0 text-texte-discret" />
         <input
-          id="storefront-search"
+          id={inputId}
           type="search"
           name="q"
           value={value}
           onChange={(event) => setValue(event.target.value)}
           placeholder="Rechercher un produit, une marque…"
-          className="w-full bg-transparent text-sm text-ink placeholder:text-ink-muted focus:outline-none"
+          className="w-full bg-transparent text-base text-encre xl:text-[13.5px] placeholder:text-texte-discret focus:outline-none"
         />
       </div>
     </form>
