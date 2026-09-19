@@ -1,4 +1,4 @@
-import { apiGet } from './client';
+import { apiGet, catalogCacheOptions, withFallback } from './client';
 import type { Tag } from './types';
 
 interface FetchOptions {
@@ -6,12 +6,17 @@ interface FetchOptions {
   cache?: RequestCache;
 }
 
-/** GET /tags — no show endpoint exists; tags are filters, not detail pages. */
+/**
+ * GET /tags — no show endpoint exists; tags are filters, not detail pages.
+ * Returns [] if the API fails. Never throws.
+ */
 export async function getTags(options: FetchOptions = {}): Promise<Tag[]> {
-  const response = await apiGet<{ data: Tag[] }>('/tags', {
-    signal: options.signal,
-    cache: options.cache,
-  });
+  return withFallback('GET /tags', [], async () => {
+    const response = await apiGet<{ data: Tag[] }>('/tags', {
+      signal: options.signal,
+      ...catalogCacheOptions(options.cache),
+    });
 
-  return response.data;
+    return response.data;
+  });
 }

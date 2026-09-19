@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
+import { cache } from 'react';
 import { ProductAddToCart } from '@/components/cart/ProductAddToCart';
 import { ProductSection } from '@/components/catalog/ProductSection';
 import { Badge } from '@/components/ui/Badge';
@@ -8,22 +9,25 @@ import { PriceTag } from '@/components/product/PriceTag';
 import { ProductGallery } from '@/components/product/ProductGallery';
 import { ProductReassurance } from '@/components/product/ProductReassurance';
 import { StockBadge } from '@/components/product/StockBadge';
-import { ApiError } from '@/lib/api/client';
 import { getProduct, getProducts } from '@/lib/api/products';
 import { discountPercent } from '@/lib/utils/pricing';
 
 export const dynamic = 'force-dynamic';
 
-async function loadProduct(slug: string) {
-  try {
-    return await getProduct(slug);
-  } catch (error) {
-    if (error instanceof ApiError && error.status === 404) {
-      notFound();
-    }
-    throw error;
+// cache() : generateMetadata et la page partagent un seul appel API par
+// requête. Next ne déduplique pas ce fetch tout seul, car request() lui
+// passe toujours un AbortSignal (timeout), ce qui désactive la
+// mémoïsation automatique des fetch.
+// getProduct() ne lève jamais : null = introuvable (404) ou API indisponible.
+const loadProduct = cache(async (slug: string) => {
+  const product = await getProduct(slug);
+
+  if (product === null) {
+    notFound();
   }
-}
+
+  return product;
+});
 
 export async function generateMetadata({ params }: PageProps<'/produits/[slug]'>): Promise<Metadata> {
   const { slug } = await params;

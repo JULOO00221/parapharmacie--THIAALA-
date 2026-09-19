@@ -1,24 +1,28 @@
 import type { Metadata } from 'next';
 import Image from 'next/image';
 import { notFound } from 'next/navigation';
+import { cache } from 'react';
 import { ProductGrid } from '@/components/catalog/ProductGrid';
 import { Pagination } from '@/components/catalog/Pagination';
-import { ApiError } from '@/lib/api/client';
 import { getBrand } from '@/lib/api/brands';
 import { getProducts } from '@/lib/api/products';
 
 export const dynamic = 'force-dynamic';
 
-async function loadBrand(slug: string) {
-  try {
-    return await getBrand(slug);
-  } catch (error) {
-    if (error instanceof ApiError && error.status === 404) {
-      notFound();
-    }
-    throw error;
+// cache() : generateMetadata et la page partagent un seul appel API par
+// requête. Next ne déduplique pas ce fetch tout seul, car request() lui
+// passe toujours un AbortSignal (timeout), ce qui désactive la
+// mémoïsation automatique des fetch.
+// getBrand() ne lève jamais : null = introuvable (404) ou API indisponible.
+const loadBrand = cache(async (slug: string) => {
+  const brand = await getBrand(slug);
+
+  if (brand === null) {
+    notFound();
   }
-}
+
+  return brand;
+});
 
 export async function generateMetadata({ params }: PageProps<'/marques/[slug]'>): Promise<Metadata> {
   const { slug } = await params;

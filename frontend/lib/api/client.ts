@@ -124,6 +124,41 @@ export async function request<T>(
   }
 }
 
+/**
+ * Fenêtre de revalidation (Data Cache Next.js) des lectures publiques du
+ * catalogue. Une valeur explicite l'emporte sur `dynamic = 'force-dynamic'`
+ * des pages : elles restent rendues à la demande, mais ne rappellent
+ * Laravel qu'au plus toutes les 5 minutes par URL.
+ */
+export const CATALOG_REVALIDATE_SECONDS = 300;
+
+/**
+ * Options de cache d'une lecture catalogue : revalidation à 300s, sauf si
+ * l'appelant impose explicitement un mode `cache` (Next refuse de combiner
+ * `cache` et `revalidate` sur un même fetch).
+ */
+export function catalogCacheOptions(cache?: RequestCache): Pick<GetOptions, 'cache' | 'next'> {
+  return cache ? { cache } : { next: { revalidate: CATALOG_REVALIDATE_SECONDS } };
+}
+
+/**
+ * Exécute une lecture et renvoie `fallback` au lieu de propager l'erreur —
+ * une API indisponible ne doit jamais faire planter le rendu d'une page
+ * (ni du Header présent dans le layout, donc de tout le site). Un 404 est
+ * une réponse attendue (slug inconnu/inactif) et n'est pas journalisé.
+ */
+export async function withFallback<T>(label: string, fallback: T, load: () => Promise<T>): Promise<T> {
+  try {
+    return await load();
+  } catch (error) {
+    if (!(error instanceof ApiError && error.status === 404)) {
+      console.error(`[api] ${label} a échoué, valeur par défaut renvoyée.`, error);
+    }
+
+    return fallback;
+  }
+}
+
 /** GET a Laravel API v1 endpoint and parse its JSON response. */
 export async function apiGet<T>(path: string, options: GetOptions = {}): Promise<T> {
   const { params, signal, timeoutMs, cache, next, headers } = options;
