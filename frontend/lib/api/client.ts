@@ -133,12 +133,20 @@ export async function request<T>(
 export const CATALOG_REVALIDATE_SECONDS = 300;
 
 /**
- * Options de cache d'une lecture catalogue : revalidation à 300s, sauf si
- * l'appelant impose explicitement un mode `cache` (Next refuse de combiner
- * `cache` et `revalidate` sur un même fetch).
+ * Tag porté par toutes les lectures du catalogue en cache. Laravel appelle
+ * POST /api/revalidate après chaque modification du catalogue (et après
+ * chaque déploiement de l'API), qui expire ce tag aussitôt : les 5 minutes
+ * ne sont plus qu'un filet de sécurité si un appel se perd.
+ */
+export const CATALOG_CACHE_TAG = 'catalog';
+
+/**
+ * Options de cache d'une lecture catalogue : revalidation à 300s et tag
+ * `catalog`, sauf si l'appelant impose explicitement un mode `cache` (Next
+ * refuse de combiner `cache` et `revalidate` sur un même fetch).
  */
 export function catalogCacheOptions(cache?: RequestCache): Pick<GetOptions, 'cache' | 'next'> {
-  return cache ? { cache } : { next: { revalidate: CATALOG_REVALIDATE_SECONDS } };
+  return cache ? { cache } : { next: { revalidate: CATALOG_REVALIDATE_SECONDS, tags: [CATALOG_CACHE_TAG] } };
 }
 
 /**

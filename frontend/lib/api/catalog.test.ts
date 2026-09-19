@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { getBrand, getBrands } from './brands';
 import { getCategories, getCategory } from './categories';
-import { CATALOG_REVALIDATE_SECONDS } from './client';
+import { CATALOG_CACHE_TAG, CATALOG_REVALIDATE_SECONDS } from './client';
 import { getProduct, getProducts } from './products';
 import { getTags } from './tags';
 
@@ -23,14 +23,17 @@ describe('lib/api catalogue reads', () => {
     vi.unstubAllEnvs();
   });
 
-  it('asks Next.js to revalidate every catalogue read after 300 seconds', async () => {
+  it('caches every catalogue read for 300 seconds under the catalog tag', async () => {
     const fetchSpy = vi.spyOn(global, 'fetch').mockImplementation(async () => jsonResponse({ data: [] }));
 
     await Promise.all([getProducts(), getProduct('x'), getCategories(), getCategory('x'), getBrands(), getBrand('x'), getTags()]);
 
     expect(fetchSpy).toHaveBeenCalledTimes(7);
     for (const [, init] of fetchSpy.mock.calls) {
-      expect((init as RequestInit & { next?: { revalidate?: number } }).next).toEqual({ revalidate: CATALOG_REVALIDATE_SECONDS });
+      expect((init as RequestInit & { next?: unknown }).next).toEqual({
+        revalidate: CATALOG_REVALIDATE_SECONDS,
+        tags: [CATALOG_CACHE_TAG],
+      });
       expect(init?.cache).toBeUndefined();
     }
   });
