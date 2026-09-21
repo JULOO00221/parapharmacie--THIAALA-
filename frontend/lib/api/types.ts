@@ -5,23 +5,10 @@
  * source of truth.
  */
 
-/**
- * Mention imposée par la licence d'une photo venue d'une source externe
- * (Open Beauty Facts, sous CC-BY-SA). Absente des photos prises en boutique.
- * Quand elle est présente, elle doit être affichée avec l'image.
- */
-export interface ImageAttribution {
-  text: string;
-  license_code: string;
-  license_url: string;
-  source_url: string | null;
-}
-
 export interface ProductImage {
   url: string;
   alt_text: string | null;
   sort_order: number;
-  attribution?: ImageAttribution;
 }
 
 export interface Brand {
