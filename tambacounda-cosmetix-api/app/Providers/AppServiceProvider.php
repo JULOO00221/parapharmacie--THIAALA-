@@ -10,6 +10,7 @@ use App\Models\Stock;
 use App\Models\Tag;
 use App\Observers\CatalogCacheObserver;
 use App\Observers\StockObserver;
+use App\Services\ImageSourcing\OpenBeautyFactsClient;
 use App\WhatsApp\MockWhatsAppProvider;
 use App\WhatsApp\WhatsAppProviderInterface;
 use Illuminate\Cache\RateLimiting\Limit;
@@ -31,6 +32,12 @@ class AppServiceProvider extends ServiceProvider
         // garde-fou WHATSAPP_MOCK reste dans WhatsAppProviderFactory,
         // pas ici.
         $this->app->bind(WhatsAppProviderInterface::class, MockWhatsAppProvider::class);
+
+        // Partagé, car ce client porte l'état de la limite de débit d'Open
+        // Beauty Facts (dernier appel émis) ainsi que le compte de requêtes et
+        // les erreurs affichés en fin de commande. Deux instances se
+        // croiraient seules et dépasseraient le quota autorisé.
+        $this->app->singleton(OpenBeautyFactsClient::class);
     }
 
     /**

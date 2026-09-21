@@ -6,6 +6,7 @@ import { ProductAddToCart } from '@/components/cart/ProductAddToCart';
 import { Breadcrumb, type BreadcrumbItem } from '@/components/catalog/Breadcrumb';
 import { ProductSection } from '@/components/catalog/ProductSection';
 import { PharmacistAdvice } from '@/components/layout/PharmacistAdvice';
+import { ImageCredits } from '@/components/product/ImageCredits';
 import { PriceTag } from '@/components/product/PriceTag';
 import { ProductGallery } from '@/components/product/ProductGallery';
 import { ProductReassurance } from '@/components/product/ProductReassurance';
@@ -176,7 +177,12 @@ export default async function ProductPage({ params }: PageProps<'/produits/[slug
         </div>
 
         <div className="grid gap-[22px] lg:grid-cols-[minmax(0,620px)_minmax(0,1fr)] lg:gap-14">
-          <ProductGallery images={product.images} productName={product.name} featured={product.featured} percentOff={percentOff} />
+          <div className="flex flex-col gap-2.5">
+            <ProductGallery images={product.images} productName={product.name} featured={product.featured} percentOff={percentOff} />
+            {/* Crédit photo : obligatoire sous CC-BY-SA, donc rendu au plus
+                près de l'image, pas relégué en pied de page. */}
+            <ImageCredits images={product.images} />
+          </div>
 
           <div className="flex flex-col gap-[13px] lg:gap-[18px]">
             {product.brand && isRealBrand(product.brand) && (
