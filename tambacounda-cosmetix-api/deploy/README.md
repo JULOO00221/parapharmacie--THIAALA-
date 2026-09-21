@@ -97,6 +97,35 @@ d'échec.
 
 ---
 
+## Retirer le catalogue de démonstration
+
+Le site a été construit avec 24 produits fictifs (références `TC-*`) et
+10 marques inventées, qui n'ont jamais été en vente. Pour les retirer de la
+boutique :
+
+```bash
+cd /var/www/tambacounda-cosmetix/tambacounda-cosmetix-api
+
+# Voir ce qui serait modifié, sans rien écrire
+php artisan catalog:deactivate-demo --dry-run
+
+# Appliquer
+php artisan catalog:deactivate-demo
+```
+
+La commande **ne supprime rien** : elle bascule `is_active` à `false`, ce qui
+suffit à retirer les produits et les marques de l'API publique, de la page
+d'accueil et des compteurs de catégories. Les stocks et les lignes de
+commande qui référencent ces produits — il y en a — restent intacts.
+
+`php artisan catalog:deactivate-demo --reactivate` annule l'opération. La
+relancer deux fois de suite ne fait rien la seconde fois.
+
+Le worker doit tourner : la commande passe par les modèles, donc l'observer
+du catalogue met en file un vidage du cache du frontend.
+
+---
+
 ## Vérifier que tout tourne vraiment
 
 ### Le worker

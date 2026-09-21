@@ -11,8 +11,13 @@ class BrandSeeder extends Seeder
     /**
      * Fictional brand names, plausible for a Senegalese parapharmacy —
      * none of these correspond to real companies or products.
+     *
+     * Public because catalog:deactivate-demo reads it to know which brands
+     * are demo ones: duplicating the list there would let the two drift
+     * apart, and a brand forgotten on one side would stay visible on the
+     * storefront.
      */
-    private const BRANDS = [
+    public const BRANDS = [
         ['name' => 'Teranga Cosmétique', 'website' => 'https://teranga-cosmetique.example'],
         ['name' => 'Baobab Soins', 'website' => 'https://baobab-soins.example'],
         ['name' => 'Sahel Pharma', 'website' => null],
